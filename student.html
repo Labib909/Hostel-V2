@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Portal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Student Portal</div>
+  <div class="nav">
+    <a href="student-settings.html">Change Password</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+  <div class="card">
+    <h1 id="welcomeMsg">Welcome</h1>
+    <p class="sub" id="admissionNotice"></p>
+
+    <div class="big-actions">
+      <a class="big-btn admission" href="student-admission.html">
+        <div class="icon">A</div>
+        <div>
+          Admission Form
+          <div class="desc" id="admissionDesc">Fill in your details</div>
+        </div>
+      </a>
+      <a class="big-btn payment" href="student-payment.html">
+        <div class="icon">৳</div>
+        <div>
+          Payment Form
+          <div class="desc">Submit a payment and view your history</div>
+        </div>
+      </a>
+      <a class="big-btn problem" href="student-problem.html">
+        <div class="icon">!</div>
+        <div>
+          Problem Box
+          <div class="desc">Send us a message if something's wrong</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const doc = await db.collection('students').doc(user.uid).get();
+  if(!doc.exists){
+    alert('No student profile found for this account. Contact the admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+  const s = doc.data();
+
+  document.getElementById('welcomeMsg').textContent = s.fullname ? ('Welcome, ' + s.fullname) : 'Welcome';
+  if(!s.admissionSubmitted){
+    document.getElementById('admissionNotice').textContent = "Please complete your Admission Form first.";
+    document.getElementById('admissionDesc').textContent = 'Not completed yet — start here';
+  }else{
+    document.getElementById('admissionNotice').textContent = '';
+    document.getElementById('admissionDesc').textContent = 'View or update your details';
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+</script>
+</body>
+</html>

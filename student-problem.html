@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Problem Box</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Student Portal</div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+  <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
+
+  <div class="card">
+    <h1>Problem Box</h1>
+    <p class="sub">Let us know if something's wrong — this goes straight to the admin.</p>
+
+    <form id="problemForm" novalidate>
+      <div class="field" data-field="message">
+        <label>Your message</label>
+        <textarea id="p_message" style="min-height:140px;" placeholder="Describe your problem..."></textarea>
+        <div class="err">Please write a message before sending.</div>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn" style="background:var(--gold);">Send Message</button>
+      <div class="status" id="statusMsg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>My Previous Messages</h2>
+    <div id="historyList"></div>
+    <div class="empty hidden" id="historyEmpty">No messages sent yet.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+let currentUid = null;
+let currentStudentData = null;
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+  currentUid = user.uid;
+
+  const doc = await db.collection('students').doc(currentUid).get();
+  if(!doc.exists){
+    alert('No student profile found for this account. Contact the admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+  currentStudentData = doc.data();
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadHistory();
+});
+
+document.getElementById('problemForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const form = this;
+  const statusMsg = document.getElementById('statusMsg');
+  statusMsg.style.display = 'none';
+
+  const message = document.getElementById('p_message').value.trim();
+  const field = form.querySelector('[data-field="message"]');
+  if(!message){
+    field.classList.add('invalid');
+    return;
+  }
+  field.classList.remove('invalid');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+
+  try{
+    await db.collection('problems').add({
+      studentUid: currentUid,
+      studentName: currentStudentData.fullname || '',
+      phone: currentStudentData.phone || currentStudentData.phoneLogin || '',
+      message,
+      status: 'New',
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusMsg.textContent = 'Message sent.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    form.reset();
+    loadHistory();
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong sending your message. Please try again.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Send Message';
+});
+
+async function loadHistory(){
+  const list = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+  list.innerHTML = '';
+  const snap = await db.collection('problems').where('studentUid','==',currentUid).orderBy('submittedAt','desc').get();
+  if(snap.empty){
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  snap.forEach(doc=>{
+    const p = doc.data();
+    let dateLabel = '';
+    if(p.submittedAt && p.submittedAt.toDate) dateLabel = p.submittedAt.toDate().toLocaleDateString();
+    const item = document.createElement('div');
+    item.style.cssText = 'border-bottom:1px solid var(--line); padding:12px 0; font-size:13.5px;';
+    item.innerHTML = `<div style="color:var(--muted); font-size:12px; margin-bottom:4px;">${dateLabel} — ${p.status || 'New'}</div><div>${p.message}</div>`;
+    list.appendChild(item);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Problem Box</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .problem-item{ border-bottom:1px solid var(--line); padding:16px 0; }
+  .problem-item:last-child{ border-bottom:none; }
+  .problem-meta{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px; }
+  .problem-who{ font-weight:600; font-size:14px; }
+  .problem-contact{ font-size:12.5px; color:var(--muted); }
+  .problem-date{ font-size:12px; color:var(--muted); }
+  .problem-msg{ font-size:13.5px; line-height:1.5; margin-top:4px; }
+  .status-select{ font-size:12px; padding:4px 8px; border-radius:6px; border:1.5px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-problems.html" class="active">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+  <div class="card">
+    <h2>Problem Box</h2>
+    <p class="sub">Messages students have sent, newest first.</p>
+    <div id="problemList"></div>
+    <div class="empty hidden" id="problemEmpty">No messages yet.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadProblems();
+});
+
+async function loadProblems(){
+  const list = document.getElementById('problemList');
+  const empty = document.getElementById('problemEmpty');
+  list.innerHTML = '';
+
+  const snap = await db.collection('problems').orderBy('submittedAt','desc').get();
+  if(snap.empty){
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  snap.forEach(doc=>{
+    const p = doc.data();
+    let dateLabel = '';
+    if(p.submittedAt && p.submittedAt.toDate) dateLabel = p.submittedAt.toDate().toLocaleString();
+
+    const item = document.createElement('div');
+    item.className = 'problem-item';
+    item.innerHTML = `
+      <div class="problem-meta">
+        <div>
+          <div class="problem-who">${p.studentName || '(unnamed)'}</div>
+          <div class="problem-contact">${p.phone || ''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="problem-date">${dateLabel}</div>
+          <select class="status-select" data-id="${doc.id}">
+            <option value="New" ${p.status === 'New' ? 'selected' : ''}>New</option>
+            <option value="In Progress" ${p.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+            <option value="Resolved" ${p.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+          </select>
+        </div>
+      </div>
+      <div class="problem-msg">${p.message}</div>
+    `;
+    list.appendChild(item);
+  });
+
+  document.querySelectorAll('.status-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const id = sel.getAttribute('data-id');
+      await db.collection('problems').doc(id).update({ status: sel.value });
+    });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+  <div class="card" style="margin-top:60px;">
+    <h1 style="text-align:center;">Login</h1>
+    <p class="sub" style="text-align:center;">For students and admin. Accounts are created by the admin.</p>
+
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="phone">Phone number</label>
+        <input type="tel" id="phone" placeholder="e.g. 01712345678" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password">
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">Log in</button>
+      <div class="status" id="statusMsg"></div>
+    </form>
+    <p style="text-align:center; margin-top:20px;"><a class="back" href="index.html">&larr; Back to home</a></p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+const statusMsg = document.getElementById('statusMsg');
+const submitBtn = document.getElementById('submitBtn');
+
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  statusMsg.style.display = 'none';
+  const phone = document.getElementById('phone').value.trim();
+  const password = document.getElementById('password').value;
+
+  if(!phone || !password){
+    statusMsg.textContent = 'Please enter both phone number and password.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Logging in...';
+
+  try{
+    const authEmail = phoneToAuthEmail(phone);
+    const cred = await auth.signInWithEmailAndPassword(authEmail, password);
+    const uid = cred.user.uid;
+
+    const adminDoc = await db.collection('admins').doc(uid).get();
+    if(adminDoc.exists){
+      window.location.href = 'admin.html';
+      return;
+    }
+
+    const studentDoc = await db.collection('students').doc(uid).get();
+    if(studentDoc.exists){
+      window.location.href = 'student.html';
+      return;
+    }
+
+    statusMsg.textContent = 'Your account has no profile set up. Contact the admin.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    await auth.signOut();
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Log in';
+
+  }catch(err){
+    let msg = 'Login failed. Please check your phone number and password.';
+    if(err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please wait a bit and try again.';
+    statusMsg.textContent = msg;
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Log in';
+  }
+});
+</script>
+</body>
+</html>

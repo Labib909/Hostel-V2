@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Details</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-payments.html" class="active">Payment Details</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Payment Details</h2>
+    <p class="sub">Pick a month to see which students paid and which didn't.</p>
+    <div class="field" style="max-width:320px;">
+      <label>Month</label>
+      <select id="monthSelect"></select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Paid <span id="paidCount" style="color:var(--muted); font-weight:400; font-size:14px;"></span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Roll</th><th>Amount</th><th>Method</th><th>Txn ID</th></tr></thead>
+        <tbody id="paidBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="paidEmpty">No one has paid for this month yet.</div>
+  </div>
+
+  <div class="card">
+    <h2>Not Paid <span id="unpaidCount" style="color:var(--muted); font-weight:400; font-size:14px;"></span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Roll</th><th>Phone</th></tr></thead>
+        <tbody id="unpaidBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="unpaidEmpty">Everyone has paid for this month.</div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+let allStudents = [];
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const snap = await db.collection('students').get();
+  allStudents = [];
+  snap.forEach(doc=> allStudents.push({ uid: doc.id, ...doc.data() }));
+
+  buildMonthOptions();
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+
+  document.getElementById('monthSelect').addEventListener('change', renderForSelectedMonth);
+  renderForSelectedMonth();
+});
+
+function monthLabel(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+function monthKeyOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+function buildMonthOptions(){
+  const select = document.getElementById('monthSelect');
+  let html = '';
+  // 6 months back through 3 months ahead
+  for(let offset = -6; offset <= 3; offset++){
+    const key = monthKeyOffset(offset);
+    const label = monthLabel(offset) + (offset === 0 ? ' (current)' : '');
+    html += `<option value="${key}" ${offset === 0 ? 'selected' : ''}>${label}</option>`;
+  }
+  select.innerHTML = html;
+}
+
+async function renderForSelectedMonth(){
+  const forMonth = document.getElementById('monthSelect').value;
+
+  const snap = await db.collection('payments').where('forMonth','==',forMonth).get();
+  const paidMap = {}; // uid -> payment data
+  snap.forEach(doc=>{
+    const p = doc.data();
+    paidMap[p.studentUid] = p;
+  });
+
+  const paidBody = document.getElementById('paidBody');
+  const unpaidBody = document.getElementById('unpaidBody');
+  paidBody.innerHTML = '';
+  unpaidBody.innerHTML = '';
+
+  let paidCount = 0, unpaidCount = 0;
+
+  allStudents.forEach(s=>{
+    if(paidMap[s.uid]){
+      paidCount++;
+      const p = paidMap[s.uid];
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${s.fullname || '(unnamed)'}</td><td>${s.rollNumber || '—'}</td><td>৳${p.amount}</td><td>${p.method}</td><td>${p.txn}</td>`;
+      paidBody.appendChild(row);
+    }else{
+      unpaidCount++;
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${s.fullname || '(unnamed)'}</td><td>${s.rollNumber || '—'}</td><td>${s.phone || s.phoneLogin || '—'}</td>`;
+      unpaidBody.appendChild(row);
+    }
+  });
+
+  document.getElementById('paidCount').textContent = '(' + paidCount + ')';
+  document.getElementById('unpaidCount').textContent = '(' + unpaidCount + ')';
+  document.getElementById('paidEmpty').classList.toggle('hidden', paidCount !== 0);
+  document.getElementById('unpaidEmpty').classList.toggle('hidden', unpaidCount !== 0);
+}
+</script>
+</body>
+</html>

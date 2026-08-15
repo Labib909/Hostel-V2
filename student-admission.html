@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admission Form</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Student Portal</div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+  <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
+
+  <div class="card">
+    <h1>Admission Form</h1>
+    <p class="sub">Fill this in once — you can come back and update it any time.</p>
+
+    <form id="admissionForm" novalidate>
+      <div class="section-label first">I am a</div>
+      <div class="field" data-field="role">
+        <div class="role-toggle">
+          <label class="role-option" id="roleStudentOpt"><input type="radio" name="role" value="student" id="role_student">Student</label>
+          <label class="role-option" id="roleWorkerOpt"><input type="radio" name="role" value="worker" id="role_worker">Worker</label>
+        </div>
+        <div class="err">Please choose Student or Worker.</div>
+      </div>
+
+      <div class="section-label">Basic Info</div>
+      <div class="field" data-field="fullname"><label>Full name</label><input type="text" id="a_fullname"><div class="err">Please enter the full name.</div></div>
+      <div class="field" data-field="nickname"><label>Nick name</label><input type="text" id="a_nickname"><div class="err">Please enter a nick name.</div></div>
+      <div class="field" data-field="phone"><label>Phone number</label><input type="tel" id="a_phone"><div class="err">Please enter a valid phone number.</div></div>
+      <div class="field" data-field="whatsapp"><label>WhatsApp number</label><input type="tel" id="a_whatsapp"><div class="err">Please enter a valid WhatsApp number.</div></div>
+
+      <div id="studentFields" class="hidden">
+        <div class="section-label">Academic Info</div>
+        <div class="field" data-field="college"><label>College name</label><input type="text" id="a_college"><div class="err">Please enter the college name.</div></div>
+        <div class="field" data-field="coursename"><label>Course name</label><input type="text" id="a_coursename"><div class="err">Please enter the course name.</div></div>
+        <div class="field" data-field="collegecourse"><label>College / course level</label>
+          <select id="a_collegecourse"><option value="">Select level</option><option value="SSC">SSC</option><option value="HSC">HSC</option><option value="Honors">Honors</option></select>
+          <div class="err">Please select a level.</div>
+        </div>
+        <div class="field" data-field="courseyear"><label>Course year</label>
+          <select id="a_courseyear"><option value="">Select year</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="Complete">Complete</option></select>
+          <div class="err">Please select the course year.</div>
+        </div>
+      </div>
+
+      <div id="workerFields" class="hidden">
+        <div class="section-label">Job Info</div>
+        <div class="field" data-field="jobplace"><label>Job place name</label><input type="text" id="a_jobplace"><div class="err">Please enter the job place name.</div></div>
+        <div class="field" data-field="jobplacemobile"><label>Job place mobile number</label><input type="tel" id="a_jobplacemobile"><div class="err">Please enter a valid mobile number.</div></div>
+      </div>
+
+      <div class="section-label">Family Contacts</div>
+      <div class="field" data-field="father"><label>Father's name</label><input type="text" id="a_father"><div class="err">Please enter the father's name.</div></div>
+      <div class="field" data-field="fathermobile"><label>Father's mobile number</label><input type="tel" id="a_fathermobile"><div class="err">Please enter a valid mobile number.</div></div>
+      <div class="field" data-field="mother"><label>Mother's name</label><input type="text" id="a_mother"><div class="err">Please enter the mother's name.</div></div>
+      <div class="field" data-field="mothermobile"><label>Mother's mobile number</label><input type="tel" id="a_mothermobile"><div class="err">Please enter a valid mobile number.</div></div>
+      <div class="field" data-field="sibling"><label>Brother / Sister name <span class="optional">(optional)</span></label><input type="text" id="a_siblingname"></div>
+      <div class="field" data-field="siblingmobile"><label>Brother / Sister mobile number <span class="optional">(optional)</span></label><input type="tel" id="a_siblingmobile"></div>
+      <div class="field" data-field="husband"><label>Husband name <span class="optional">(optional)</span></label><input type="text" id="a_husbandname"></div>
+      <div class="field" data-field="husbandmobile"><label>Husband mobile number <span class="optional">(optional)</span></label><input type="tel" id="a_husbandmobile"></div>
+
+      <div class="section-label">Address &amp; Referral</div>
+      <div class="field" data-field="address"><label>Permanent address</label><textarea id="a_address"></textarea><div class="err">Please enter the permanent address.</div></div>
+      <div class="field" data-field="heard"><label>Where did you get our news?</label>
+        <div class="radio-group">
+          <label class="radio-pill" id="heardOnlineOpt"><input type="radio" name="heard" value="Online Ad" id="heard_online">Online Ad</label>
+          <label class="radio-pill" id="heardPersonOpt"><input type="radio" name="heard" value="Person" id="heard_person">Person</label>
+        </div>
+        <div class="err">Please choose an option.</div>
+      </div>
+      <div id="personFields" class="hidden">
+        <div class="field" data-field="personname"><label>Person's name</label><input type="text" id="a_personname"><div class="err">Please enter the person's name.</div></div>
+        <div class="field" data-field="personmobile"><label>Person's mobile number</label><input type="tel" id="a_personmobile"><div class="err">Please enter a valid mobile number.</div></div>
+      </div>
+
+      <div class="section-label">Stay Details</div>
+      <div class="field" data-field="startdate"><label>Starting date</label><input type="date" id="a_startdate"><div class="err">Please choose a starting date.</div></div>
+      <div class="field" data-field="duration"><label>How long do you want to stay?</label>
+        <select id="a_duration"><option value="">Select duration</option><option value="1 Month">1 Month</option><option value="3 Months">3 Months</option><option value="6 Months">6 Months</option><option value="1 Year">1 Year</option><option value="More than 1 Year">More than 1 Year</option></select>
+        <div class="err">Please select a duration.</div>
+      </div>
+
+      <div class="section-label">Photo</div>
+      <div class="field" data-field="photo"><label>Upload picture</label>
+        <label class="photo-drop" id="photoDrop">
+          <img class="photo-preview" id="photoPreview">
+          <div class="hint" id="photoHint">Click to upload a photo (JPG or PNG, under 50MB)</div>
+          <input type="file" id="a_photo" accept="image/*">
+        </label>
+        <div class="err">Please upload a photo under 50MB.</div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="admissionSubmitBtn">Save Admission Form</button>
+      <div class="status" id="admissionStatus"></div>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+let currentUid = null;
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+const roleStudent = document.getElementById('role_student');
+const roleWorker = document.getElementById('role_worker');
+const roleStudentOpt = document.getElementById('roleStudentOpt');
+const roleWorkerOpt = document.getElementById('roleWorkerOpt');
+const studentFields = document.getElementById('studentFields');
+const workerFields = document.getElementById('workerFields');
+function updateRoleUI(){
+  roleStudentOpt.classList.toggle('active', roleStudent.checked);
+  roleWorkerOpt.classList.toggle('active', roleWorker.checked);
+  studentFields.classList.toggle('hidden', !roleStudent.checked);
+  workerFields.classList.toggle('hidden', !roleWorker.checked);
+}
+roleStudent.addEventListener('change', updateRoleUI);
+roleWorker.addEventListener('change', updateRoleUI);
+roleStudentOpt.addEventListener('click', ()=>{ roleStudent.checked = true; updateRoleUI(); });
+roleWorkerOpt.addEventListener('click', ()=>{ roleWorker.checked = true; updateRoleUI(); });
+
+const heardOnline = document.getElementById('heard_online');
+const heardPerson = document.getElementById('heard_person');
+const heardOnlineOpt = document.getElementById('heardOnlineOpt');
+const heardPersonOpt = document.getElementById('heardPersonOpt');
+const personFields = document.getElementById('personFields');
+function updateHeardUI(){
+  heardOnlineOpt.classList.toggle('active', heardOnline.checked);
+  heardPersonOpt.classList.toggle('active', heardPerson.checked);
+  personFields.classList.toggle('hidden', !heardPerson.checked);
+}
+heardOnline.addEventListener('change', updateHeardUI);
+heardPerson.addEventListener('change', updateHeardUI);
+heardOnlineOpt.addEventListener('click', ()=>{ heardOnline.checked = true; updateHeardUI(); });
+heardPersonOpt.addEventListener('click', ()=>{ heardPerson.checked = true; updateHeardUI(); });
+
+const photoInput = document.getElementById('a_photo');
+const photoPreview = document.getElementById('photoPreview');
+const photoHint = document.getElementById('photoHint');
+let photoBase64 = '';
+photoInput.addEventListener('change', ()=>{
+  const file = photoInput.files[0];
+  if(!file) return;
+  if(file.size > 50 * 1024 * 1024){
+    document.querySelector('[data-field="photo"]').classList.add('invalid');
+    photoInput.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e=>{
+    photoBase64 = e.target.result;
+    photoPreview.src = photoBase64;
+    photoPreview.style.display = 'block';
+    photoHint.textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+  document.querySelector('[data-field="photo"]').classList.remove('invalid');
+});
+
+function markValid(el){ el.classList.remove('invalid'); }
+function markInvalid(el){ el.classList.add('invalid'); }
+function isValidPhone(v){ return /^[0-9+\-\s]{7,15}$/.test(v.trim()); }
+function val(id){ return document.getElementById(id).value.trim(); }
+function setVal(id, v){ document.getElementById(id).value = v || ''; }
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+  currentUid = user.uid;
+
+  const doc = await db.collection('students').doc(currentUid).get();
+  if(!doc.exists){
+    alert('No student profile found for this account. Contact the admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+  const s = doc.data();
+
+  if(s.role === 'student'){ roleStudent.checked = true; }
+  else if(s.role === 'worker'){ roleWorker.checked = true; }
+  updateRoleUI();
+
+  setVal('a_fullname', s.fullname); setVal('a_nickname', s.nickname);
+  setVal('a_phone', s.phone || s.phoneLogin); setVal('a_whatsapp', s.whatsapp);
+  setVal('a_college', s.college); setVal('a_coursename', s.coursename);
+  setVal('a_collegecourse', s.collegecourse); setVal('a_courseyear', s.courseyear);
+  setVal('a_jobplace', s.jobplace); setVal('a_jobplacemobile', s.jobplacemobile);
+  setVal('a_father', s.father); setVal('a_fathermobile', s.fathermobile);
+  setVal('a_mother', s.mother); setVal('a_mothermobile', s.mothermobile);
+  setVal('a_siblingname', s.siblingname); setVal('a_siblingmobile', s.siblingmobile);
+  setVal('a_husbandname', s.husbandname); setVal('a_husbandmobile', s.husbandmobile);
+  setVal('a_address', s.address);
+  if(s.heard === 'Online Ad'){ heardOnline.checked = true; }
+  else if(s.heard === 'Person'){ heardPerson.checked = true; }
+  updateHeardUI();
+  setVal('a_personname', s.personname); setVal('a_personmobile', s.personmobile);
+  setVal('a_startdate', s.startdate); setVal('a_duration', s.duration);
+  if(s.photoBase64){
+    photoBase64 = s.photoBase64;
+    photoPreview.src = photoBase64;
+    photoPreview.style.display = 'block';
+    photoHint.textContent = 'Current photo on file (click to replace)';
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+
+document.getElementById('admissionForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const form = this;
+  let valid = true;
+  const statusMsg = document.getElementById('admissionStatus');
+  statusMsg.style.display = 'none';
+
+  function requireText(id, fieldName){
+    const v = val(id); const f = form.querySelector('[data-field="'+fieldName+'"]');
+    if(!v){ markInvalid(f); valid = false; } else { markValid(f); } return v;
+  }
+  function requirePhone(id, fieldName){
+    const v = val(id); const f = form.querySelector('[data-field="'+fieldName+'"]');
+    if(!isValidPhone(v)){ markInvalid(f); valid = false; } else { markValid(f); } return v;
+  }
+
+  const role = roleStudent.checked ? 'student' : (roleWorker.checked ? 'worker' : '');
+  const roleField = form.querySelector('[data-field="role"]');
+  if(!role){ markInvalid(roleField); valid = false; } else { markValid(roleField); }
+
+  const fullname = requireText('a_fullname','fullname');
+  const nickname = requireText('a_nickname','nickname');
+  const phone = requirePhone('a_phone','phone');
+  const whatsapp = requirePhone('a_whatsapp','whatsapp');
+
+  let college='',coursename='',collegecourse='',courseyear='',jobplace='',jobplacemobile='';
+  if(role === 'student'){
+    college = requireText('a_college','college');
+    coursename = requireText('a_coursename','coursename');
+    collegecourse = requireText('a_collegecourse','collegecourse');
+    courseyear = requireText('a_courseyear','courseyear');
+  }else if(role === 'worker'){
+    jobplace = requireText('a_jobplace','jobplace');
+    jobplacemobile = requirePhone('a_jobplacemobile','jobplacemobile');
+  }
+
+  const father = requireText('a_father','father');
+  const fathermobile = requirePhone('a_fathermobile','fathermobile');
+  const mother = requireText('a_mother','mother');
+  const mothermobile = requirePhone('a_mothermobile','mothermobile');
+  const siblingname = val('a_siblingname');
+  const siblingmobile = val('a_siblingmobile');
+  const husbandname = val('a_husbandname');
+  const husbandmobile = val('a_husbandmobile');
+  const address = requireText('a_address','address');
+
+  const heard = heardOnline.checked ? 'Online Ad' : (heardPerson.checked ? 'Person' : '');
+  const heardField = form.querySelector('[data-field="heard"]');
+  if(!heard){ markInvalid(heardField); valid = false; } else { markValid(heardField); }
+
+  let personname='', personmobile='';
+  if(heard === 'Person'){
+    personname = requireText('a_personname','personname');
+    personmobile = requirePhone('a_personmobile','personmobile');
+  }
+
+  const startdate = requireText('a_startdate','startdate');
+  const duration = requireText('a_duration','duration');
+
+  const photoField = form.querySelector('[data-field="photo"]');
+  if(!photoBase64){ markInvalid(photoField); valid = false; } else { markValid(photoField); }
+
+  if(!valid){
+    statusMsg.textContent = 'Please fill in the highlighted fields.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('admissionSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try{
+    await db.collection('students').doc(currentUid).update({
+      role, fullname, nickname, phone, whatsapp,
+      college, coursename, collegecourse, courseyear,
+      jobplace, jobplacemobile,
+      father, fathermobile, mother, mothermobile,
+      siblingname, siblingmobile, husbandname, husbandmobile,
+      address, heard, personname, personmobile,
+      startdate, duration, photoBase64,
+      admissionSubmitted: true,
+      admissionSubmittedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusMsg.textContent = 'Saved successfully.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong saving your form. Please try again.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Save Admission Form';
+});
+</script>
+</body>
+</html>

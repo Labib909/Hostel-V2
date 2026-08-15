@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Form</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Student Portal</div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+  <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
+
+  <div class="card">
+    <h2>Make a Payment</h2>
+    <form id="paymentForm" novalidate>
+      <div class="field" data-field="forMonth">
+        <label>Which month is this payment for?</label>
+        <select id="p_forMonth"></select>
+      </div>
+      <div class="field" data-field="method">
+        <label>Payment method</label>
+        <select id="p_method">
+          <option value="">Select a method</option>
+          <option value="bKash">bKash</option>
+          <option value="Nagad">Nagad</option>
+          <option value="Rocket">Rocket</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cash">Cash</option>
+          <option value="Other">Other</option>
+        </select>
+        <div class="err">Please select a payment method.</div>
+      </div>
+      <div class="field" data-field="amount">
+        <label>Amount (&#2547;)</label>
+        <input type="number" id="p_amount" min="1">
+        <div class="err">Please enter a valid amount.</div>
+      </div>
+      <div class="field" data-field="txn">
+        <label>Transaction ID</label>
+        <input type="text" id="p_txn">
+        <div class="err">Please enter the transaction ID.</div>
+      </div>
+      <button type="submit" class="submit-btn teal" id="paymentSubmitBtn">Submit Payment</button>
+      <div class="status" id="paymentStatus"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>My Payment History</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>For Month</th><th>Amount</th><th>Method</th><th>Txn ID</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="historyEmpty">No payments submitted yet.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+let currentUid = null;
+let currentStudentData = null;
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+function monthLabel(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+function monthKey(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+  currentUid = user.uid;
+
+  const doc = await db.collection('students').doc(currentUid).get();
+  if(!doc.exists){
+    alert('No student profile found for this account. Contact the admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+  currentStudentData = doc.data();
+
+  const monthSelect = document.getElementById('p_forMonth');
+  monthSelect.innerHTML = `
+    <option value="${monthKey(0)}">${monthLabel(0)} (this month)</option>
+    <option value="${monthKey(1)}">${monthLabel(1)} (advance)</option>
+    <option value="${monthKey(2)}">${monthLabel(2)} (advance)</option>
+  `;
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadPaymentHistory();
+});
+
+function markValid(el){ el.classList.remove('invalid'); }
+function markInvalid(el){ el.classList.add('invalid'); }
+function val(id){ return document.getElementById(id).value.trim(); }
+
+document.getElementById('paymentForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const form = this;
+  let valid = true;
+  const statusMsg = document.getElementById('paymentStatus');
+  statusMsg.style.display = 'none';
+
+  const forMonth = document.getElementById('p_forMonth').value;
+  const method = val('p_method');
+  const methodField = form.querySelector('[data-field="method"]');
+  if(!method){ markInvalid(methodField); valid = false; } else { markValid(methodField); }
+
+  const amount = val('p_amount');
+  const amountField = form.querySelector('[data-field="amount"]');
+  if(!amount || Number(amount) <= 0){ markInvalid(amountField); valid = false; } else { markValid(amountField); }
+
+  const txn = val('p_txn');
+  const txnField = form.querySelector('[data-field="txn"]');
+  if(!txn){ markInvalid(txnField); valid = false; } else { markValid(txnField); }
+
+  if(!valid) return;
+
+  const btn = document.getElementById('paymentSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  try{
+    await db.collection('payments').add({
+      studentUid: currentUid,
+      studentName: currentStudentData.fullname || '',
+      rollNumber: currentStudentData.rollNumber || '',
+      forMonth, method, amount: Number(amount), txn,
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusMsg.textContent = 'Payment submitted successfully.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    form.reset();
+    document.querySelectorAll('#paymentForm .field').forEach(f=>f.classList.remove('invalid'));
+    loadPaymentHistory();
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong. Please try again.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Submit Payment';
+});
+
+async function loadPaymentHistory(){
+  const body = document.getElementById('historyBody');
+  const empty = document.getElementById('historyEmpty');
+  body.innerHTML = '';
+  const snap = await db.collection('payments').where('studentUid','==',currentUid).orderBy('submittedAt','desc').get();
+  if(snap.empty){
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  snap.forEach(doc=>{
+    const p = doc.data();
+    const d = new Date(p.forMonth + '-01');
+    const label = d.toLocaleString('en-US', { month:'long', year:'numeric' });
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${label}</td><td>৳${p.amount}</td><td>${p.method}</td><td>${p.txn}</td>`;
+    body.appendChild(row);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html" class="active">Overview</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Overview</h2>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" id="statTotalStudents">–</div><div class="label">Total student accounts</div></div>
+      <div class="stat-box"><div class="num" id="statAdmissionDone">–</div><div class="label">Admission forms completed</div></div>
+      <div class="stat-box teal"><div class="num" id="statPaidThisMonth">–</div><div class="label">Paid this month</div></div>
+      <div class="stat-box teal"><div class="num" id="statAmountThisMonth">–</div><div class="label">Collected this month</div></div>
+      <div class="stat-box gold"><div class="num" id="statAdvancePayers">–</div><div class="label">Students paid in advance</div></div>
+      <div class="stat-box gold"><div class="num" id="statAdvanceAmount">–</div><div class="label">Advance amount collected</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Create Student Account</h2>
+    <p class="sub">Give the student this phone number and temporary password to log in with. They'll fill in their own details on first login.</p>
+    <form id="createForm" novalidate>
+      <div class="row-2">
+        <div class="field"><label>Phone number</label><input type="tel" id="c_phone" placeholder="e.g. 01712345678"></div>
+        <div class="field"><label>Temporary password</label><input type="text" id="c_password" placeholder="At least 6 characters"></div>
+      </div>
+      <div class="field"><label>Roll number <span style="font-weight:400;color:var(--muted);">(optional)</span></label><input type="text" id="c_roll" placeholder="e.g. 2026-045"></div>
+      <button type="submit" class="submit-btn auto" id="createBtn">Create Account</button>
+      <div class="status" id="createStatus"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>All Students</h2>
+    <div class="warning-box">
+      Phone numbers and passwords are shown here so you can share login details or help students who forget them. Keep this page private — anyone who sees it can log in as any student.
+    </div>
+    <div class="table-wrap">
+      <table id="studentsTable">
+        <thead><tr><th>Name</th><th>Phone</th><th>Password</th><th>Roll</th><th>Type</th><th>Admission</th></tr></thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="studentsEmpty">No students yet.</div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+
+  loadStudents();
+  loadPaymentStats();
+});
+
+function currentMonthKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+async function loadStudents(){
+  const snap = await db.collection('students').get();
+  const body = document.getElementById('studentsBody');
+  const empty = document.getElementById('studentsEmpty');
+  body.innerHTML = '';
+
+  let total = 0, admissionDone = 0;
+
+  if(snap.empty){
+    empty.classList.remove('hidden');
+  }else{
+    empty.classList.add('hidden');
+    snap.forEach(doc=>{
+      const s = doc.data();
+      total++;
+      if(s.admissionSubmitted) admissionDone++;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${s.fullname || '(not filled in yet)'}</td>
+        <td>${s.phone || s.phoneLogin || ''}</td>
+        <td class="mono">${s.passwordPlain || '—'}</td>
+        <td>${s.rollNumber || '—'}</td>
+        <td>${s.role ? (s.role === 'worker' ? 'Worker' : 'Student') : '—'}</td>
+        <td>${s.admissionSubmitted ? 'Completed' : 'Pending'}</td>
+      `;
+      body.appendChild(row);
+    });
+  }
+
+  document.getElementById('statTotalStudents').textContent = total;
+  document.getElementById('statAdmissionDone').textContent = admissionDone;
+}
+
+async function loadPaymentStats(){
+  const snap = await db.collection('payments').get();
+  const thisMonth = currentMonthKey();
+  const thisMonthPayerSet = new Set();
+  const advancePayerSet = new Set();
+  let thisMonthTotal = 0, advanceTotal = 0;
+
+  snap.forEach(doc=>{
+    const p = doc.data();
+    if(p.forMonth === thisMonth){
+      thisMonthPayerSet.add(p.studentUid);
+      thisMonthTotal += Number(p.amount) || 0;
+    }else if(p.forMonth > thisMonth){
+      advancePayerSet.add(p.studentUid);
+      advanceTotal += Number(p.amount) || 0;
+    }
+  });
+
+  document.getElementById('statPaidThisMonth').textContent = thisMonthPayerSet.size;
+  document.getElementById('statAmountThisMonth').textContent = '৳' + thisMonthTotal;
+  document.getElementById('statAdvancePayers').textContent = advancePayerSet.size;
+  document.getElementById('statAdvanceAmount').textContent = '৳' + advanceTotal;
+}
+
+/* ---- Create student account (via secondary Firebase app, so admin stays logged in) ---- */
+document.getElementById('createForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const statusMsg = document.getElementById('createStatus');
+  statusMsg.style.display = 'none';
+
+  const phone = document.getElementById('c_phone').value.trim();
+  const password = document.getElementById('c_password').value;
+  const roll = document.getElementById('c_roll').value.trim();
+
+  if(!phone || !password || password.length < 6){
+    statusMsg.textContent = 'Please enter a valid phone number and a password of at least 6 characters.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+
+  let secondaryApp;
+  try{
+    secondaryApp = firebase.apps.find(a => a.name === 'Secondary') || firebase.initializeApp(firebaseConfig, 'Secondary');
+    const secondaryAuth = secondaryApp.auth();
+
+    const authEmail = phoneToAuthEmail(phone);
+    const cred = await secondaryAuth.createUserWithEmailAndPassword(authEmail, password);
+    const newUid = cred.user.uid;
+
+    await db.collection('students').doc(newUid).set({
+      phone, passwordPlain: password, rollNumber: roll || '',
+      admissionSubmitted: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await secondaryAuth.signOut();
+
+    statusMsg.textContent = 'Account created. Share the phone number and password with the student.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    document.getElementById('createForm').reset();
+    loadStudents();
+
+  }catch(err){
+    let msg = 'Could not create account.';
+    if(err.code === 'auth/email-already-in-use') msg = 'That phone number is already registered.';
+    if(err.code === 'auth/invalid-email') msg = 'That phone number looks invalid.';
+    if(err.code === 'auth/weak-password') msg = 'Password is too weak — use at least 6 characters.';
+    statusMsg.textContent = msg;
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+
+  btn.disabled = false; btn.textContent = 'Create Account';
+});
+</script>
+</body>
+</html>

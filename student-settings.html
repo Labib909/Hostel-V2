@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Change Password</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Student Portal</div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+  <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
+
+  <div class="card">
+    <h1>Change Password</h1>
+    <p class="sub">You'll need your current password to set a new one.</p>
+
+    <form id="passwordForm" novalidate>
+      <div class="field" data-field="current">
+        <label>Current password</label>
+        <input type="password" id="currentPassword">
+        <div class="err">Please enter your current password.</div>
+      </div>
+      <div class="field" data-field="new">
+        <label>New password</label>
+        <input type="password" id="newPassword" placeholder="At least 6 characters">
+        <div class="err">New password must be at least 6 characters.</div>
+      </div>
+      <div class="field" data-field="confirm">
+        <label>Confirm new password</label>
+        <input type="password" id="confirmPassword">
+        <div class="err">Passwords don't match.</div>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">Update Password</button>
+      <div class="status" id="statusMsg"></div>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+let currentUser = null;
+let currentPhone = null;
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+  currentUser = user;
+
+  const doc = await db.collection('students').doc(user.uid).get();
+  if(doc.exists){
+    currentPhone = doc.data().phone || doc.data().phoneLogin || '';
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+
+function markValid(el){ el.classList.remove('invalid'); }
+function markInvalid(el){ el.classList.add('invalid'); }
+
+document.getElementById('passwordForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const form = this;
+  let valid = true;
+  const statusMsg = document.getElementById('statusMsg');
+  statusMsg.style.display = 'none';
+
+  const current = document.getElementById('currentPassword').value;
+  const currentField = form.querySelector('[data-field="current"]');
+  if(!current){ markInvalid(currentField); valid = false; } else { markValid(currentField); }
+
+  const newPass = document.getElementById('newPassword').value;
+  const newField = form.querySelector('[data-field="new"]');
+  if(!newPass || newPass.length < 6){ markInvalid(newField); valid = false; } else { markValid(newField); }
+
+  const confirm = document.getElementById('confirmPassword').value;
+  const confirmField = form.querySelector('[data-field="confirm"]');
+  if(confirm !== newPass || !confirm){ markInvalid(confirmField); valid = false; } else { markValid(confirmField); }
+
+  if(!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Updating...';
+
+  try{
+    const authEmail = phoneToAuthEmail(currentPhone);
+    const cred = firebase.auth.EmailAuthProvider.credential(authEmail, current);
+    await currentUser.reauthenticateWithCredential(cred);
+    await currentUser.updatePassword(newPass);
+
+    // Keep the admin-visible copy in sync
+    await db.collection('students').doc(currentUser.uid).update({ passwordPlain: newPass });
+
+    statusMsg.textContent = 'Password updated successfully.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    form.reset();
+  }catch(err){
+    let msg = 'Something went wrong. Please try again.';
+    if(err.code === 'auth/wrong-password') msg = 'Your current password is incorrect.';
+    statusMsg.textContent = msg;
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Update Password';
+});
+</script>
+</body>
+</html>
