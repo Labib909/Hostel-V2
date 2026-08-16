@@ -15,6 +15,9 @@
     <a href="admin-payments.html">Payment Details</a>
     <a href="admin-admission-fee.html">Admission Fee</a>
     <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-spending.html">Spending</a>
+    <a href="admin-spending-history.html">Spending History</a>
+    <a href="admin-profit-chart.html">Profit Chart</a>
     <a href="admin-problems.html">Problem Box</a>
   </div>
   <button class="logout-btn" id="logoutBtn">Log out</button>
@@ -45,6 +48,18 @@
         <div class="field"><label>Temporary password</label><input type="text" id="c_password" placeholder="At least 6 characters"></div>
       </div>
       <div class="field"><label>Roll number <span style="font-weight:400;color:var(--muted);">(optional)</span></label><input type="text" id="c_roll" placeholder="e.g. 2026-045"></div>
+      <div class="row-2">
+        <div class="field"><label>Admission fee (&#2547;)</label><input type="number" id="c_admissionFee" placeholder="e.g. 2000" min="0"></div>
+        <div class="field"><label>Monthly fee (&#2547;)</label><input type="number" id="c_monthlyFee" placeholder="e.g. 2500" min="0"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>Month they start paying</label><input type="month" id="c_startMonth"></div>
+        <div class="field"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>Flat number</label><input type="text" id="c_flat" placeholder="e.g. 4B"></div>
+        <div class="field"><label>Room number</label><input type="text" id="c_room" placeholder="e.g. 12"></div>
+      </div>
       <button type="submit" class="submit-btn auto" id="createBtn">Create Account</button>
       <div class="status" id="createStatus"></div>
     </form>
@@ -57,7 +72,7 @@
     </div>
     <div class="table-wrap">
       <table id="studentsTable">
-        <thead><tr><th>Name</th><th>Phone</th><th>Password</th><th>Roll</th><th>Type</th><th>Admission</th></tr></thead>
+        <thead><tr><th>Name</th><th>Phone</th><th>Password</th><th>Roll</th><th>Flat/Room</th><th>Monthly Fee</th><th>Type</th><th>Admission</th></tr></thead>
         <tbody id="studentsBody"></tbody>
       </table>
     </div>
@@ -119,6 +134,8 @@ async function loadStudents(){
         <td>${s.phone || s.phoneLogin || ''}</td>
         <td class="mono">${s.passwordPlain || '—'}</td>
         <td>${s.rollNumber || '—'}</td>
+        <td>${(s.flat || s.room) ? ((s.flat || '—') + ' / ' + (s.room || '—')) : '—'}</td>
+        <td>${s.monthlyFee ? '৳' + s.monthlyFee : '—'}</td>
         <td>${s.role ? (s.role === 'worker' ? 'Worker' : 'Student') : '—'}</td>
         <td>${s.admissionSubmitted ? 'Completed' : 'Pending'}</td>
       `;
@@ -163,6 +180,11 @@ document.getElementById('createForm').addEventListener('submit', async (e)=>{
   const phone = document.getElementById('c_phone').value.trim();
   const password = document.getElementById('c_password').value;
   const roll = document.getElementById('c_roll').value.trim();
+  const admissionFee = Number(document.getElementById('c_admissionFee').value) || 0;
+  const monthlyFee = Number(document.getElementById('c_monthlyFee').value) || 0;
+  const startMonth = document.getElementById('c_startMonth').value;
+  const flat = document.getElementById('c_flat').value.trim();
+  const room = document.getElementById('c_room').value.trim();
 
   if(!phone || !password || password.length < 6){
     statusMsg.textContent = 'Please enter a valid phone number and a password of at least 6 characters.';
@@ -185,6 +207,7 @@ document.getElementById('createForm').addEventListener('submit', async (e)=>{
 
     await db.collection('students').doc(newUid).set({
       phone, passwordPlain: password, rollNumber: roll || '',
+      admissionFee, monthlyFee, startMonth, flat, room,
       admissionSubmitted: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
