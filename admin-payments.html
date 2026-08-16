@@ -11,7 +11,10 @@
   <div class="brand">Admin Panel</div>
   <div class="nav">
     <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html">Student Admission</a>
     <a href="admin-payments.html" class="active">Payment Details</a>
+    <a href="admin-admission-fee.html">Admission Fee</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
     <a href="admin-problems.html">Problem Box</a>
   </div>
   <button class="logout-btn" id="logoutBtn">Log out</button>
@@ -34,7 +37,7 @@
     <h2>Paid <span id="paidCount" style="color:var(--muted); font-weight:400; font-size:14px;"></span></h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Name</th><th>Roll</th><th>Amount</th><th>Method</th><th>Txn ID</th></tr></thead>
+        <thead><tr><th>Date Paid</th><th>Roll</th><th>Name</th><th>Amount</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="paidBody"></tbody>
       </table>
     </div>
@@ -99,7 +102,6 @@ function monthKeyOffset(offset){
 function buildMonthOptions(){
   const select = document.getElementById('monthSelect');
   let html = '';
-  // 6 months back through 3 months ahead
   for(let offset = -6; offset <= 3; offset++){
     const key = monthKeyOffset(offset);
     const label = monthLabel(offset) + (offset === 0 ? ' (current)' : '');
@@ -112,38 +114,88 @@ async function renderForSelectedMonth(){
   const forMonth = document.getElementById('monthSelect').value;
 
   const snap = await db.collection('payments').where('forMonth','==',forMonth).get();
-  const paidMap = {}; // uid -> payment data
-  snap.forEach(doc=>{
-    const p = doc.data();
-    paidMap[p.studentUid] = p;
-  });
+  const paidList = [];
+  snap.forEach(doc=> paidList.push({ id: doc.id, ...doc.data() }));
+
+  const paidUidSet = new Set(paidList.map(p=>p.studentUid));
 
   const paidBody = document.getElementById('paidBody');
   const unpaidBody = document.getElementById('unpaidBody');
   paidBody.innerHTML = '';
   unpaidBody.innerHTML = '';
 
-  let paidCount = 0, unpaidCount = 0;
+  paidList.sort((a,b)=>{
+    const ta = a.submittedAt && a.submittedAt.toDate ? a.submittedAt.toDate().getTime() : 0;
+    const tb = b.submittedAt && b.submittedAt.toDate ? b.submittedAt.toDate().getTime() : 0;
+    return tb - ta;
+  });
+
+  paidList.forEach(p=>{
+    const student = allStudents.find(s=>s.uid === p.studentUid);
+    let dateLabel = '—';
+    if(p.submittedAt && p.submittedAt.toDate) dateLabel = p.submittedAt.toDate().toLocaleDateString();
+
+    let details = '—';
+    if(p.method === 'bKash'){
+      const parts = [];
+      if(p.txnId) parts.push('ID: ' + p.txnId);
+      if(p.txnPhone) parts.push('Ph: ' + p.txnPhone);
+      details = parts.join(' / ') || '—';
+    }else if(p.method === 'Person'){
+      details = 'Paid to ' + (p.personName || '—');
+    }
+
+    const pillClass = p.status === 'Received' ? 'pill-received' : 'pill-pending';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${dateLabel}</td>
+      <td>${p.rollNumber || (student ? student.rollNumber : '') || '—'}</td>
+      <td>${p.studentName || (student ? student.fullname : '') || '—'}</td>
+      <td>৳${p.amount}</td>
+      <td>${details}</td>
+      <td><span class="pill ${pillClass}">${p.status || 'Pending'}</span></td>
+      <td>
+        ${p.status === 'Received'
+          ? `<button class="small-btn" data-action="pending" data-id="${p.id}">Mark Pending</button>`
+          : `<button class="small-btn teal" data-action="receive" data-id="${p.id}">Mark Received</button>`}
+        <button class="small-btn danger" data-action="delete" data-id="${p.id}">Delete</button>
+      </td>
+    `;
+    paidBody.appendChild(row);
+  });
 
   allStudents.forEach(s=>{
-    if(paidMap[s.uid]){
-      paidCount++;
-      const p = paidMap[s.uid];
-      const row = document.createElement('tr');
-      row.innerHTML = `<td>${s.fullname || '(unnamed)'}</td><td>${s.rollNumber || '—'}</td><td>৳${p.amount}</td><td>${p.method}</td><td>${p.txn}</td>`;
-      paidBody.appendChild(row);
-    }else{
-      unpaidCount++;
+    if(!paidUidSet.has(s.uid)){
       const row = document.createElement('tr');
       row.innerHTML = `<td>${s.fullname || '(unnamed)'}</td><td>${s.rollNumber || '—'}</td><td>${s.phone || s.phoneLogin || '—'}</td>`;
       unpaidBody.appendChild(row);
     }
   });
 
-  document.getElementById('paidCount').textContent = '(' + paidCount + ')';
-  document.getElementById('unpaidCount').textContent = '(' + unpaidCount + ')';
-  document.getElementById('paidEmpty').classList.toggle('hidden', paidCount !== 0);
-  document.getElementById('unpaidEmpty').classList.toggle('hidden', unpaidCount !== 0);
+  document.getElementById('paidCount').textContent = '(' + paidList.length + ')';
+  document.getElementById('unpaidCount').textContent = '(' + (allStudents.length - paidUidSet.size) + ')';
+  document.getElementById('paidEmpty').classList.toggle('hidden', paidList.length !== 0);
+  document.getElementById('unpaidEmpty').classList.toggle('hidden', (allStudents.length - paidUidSet.size) !== 0);
+
+  document.querySelectorAll('[data-action="receive"]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      await db.collection('payments').doc(btn.getAttribute('data-id')).update({ status: 'Received' });
+      renderForSelectedMonth();
+    });
+  });
+  document.querySelectorAll('[data-action="pending"]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      await db.collection('payments').doc(btn.getAttribute('data-id')).update({ status: 'Pending' });
+      renderForSelectedMonth();
+    });
+  });
+  document.querySelectorAll('[data-action="delete"]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this payment record? This cannot be undone.')) return;
+      await db.collection('payments').doc(btn.getAttribute('data-id')).delete();
+      renderForSelectedMonth();
+    });
+  });
 }
 </script>
 </body>
