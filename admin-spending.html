@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spending</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-admission-fee.html">Admission Fee</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-spending.html" class="active">Spending</a>
+    <a href="admin-spending-history.html">Spending History</a>
+    <a href="admin-profit-chart.html">Profit Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Rent</h2>
+    <p class="sub">One rent entry per month — entering a new amount for a month you've already logged will update it, not duplicate it.</p>
+    <div class="row-2">
+      <div class="field"><label>Month</label><input type="month" id="rentMonth"></div>
+      <div class="field"><label>Amount (&#2547;)</label><input type="number" id="rentAmount" min="0"></div>
+    </div>
+    <button class="submit-btn auto" id="saveRentBtn">Save Rent</button>
+    <div class="status" id="rentStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>Other Expenses</h2>
+    <p class="sub">Log as many of these as you need per month, each with a note about what it was for.</p>
+    <div class="row-2">
+      <div class="field"><label>Month</label><input type="month" id="expenseMonth"></div>
+      <div class="field"><label>Amount (&#2547;)</label><input type="number" id="expenseAmount" min="1"></div>
+    </div>
+    <div class="field"><label>Note</label><input type="text" id="expenseNote" placeholder="What was this expense for?"></div>
+    <button class="submit-btn auto" id="addExpenseBtn">Add Expense</button>
+    <div class="status" id="expenseStatus"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const now = new Date();
+  const currentMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('rentMonth').value = currentMonth;
+  document.getElementById('expenseMonth').value = currentMonth;
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+
+document.getElementById('saveRentBtn').addEventListener('click', async ()=>{
+  const month = document.getElementById('rentMonth').value;
+  const amount = Number(document.getElementById('rentAmount').value);
+  const statusMsg = document.getElementById('rentStatus');
+
+  if(!month || !amount || amount < 0){
+    statusMsg.textContent = 'Please choose a month and a valid amount.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  try{
+    // Deterministic doc ID (rent_YYYY-MM) means saving again for the same
+    // month updates the existing entry instead of creating a duplicate.
+    await db.collection('expenses').doc('rent_' + month).set({
+      type: 'Rent', forMonth: month, amount,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusMsg.textContent = 'Rent saved for ' + month + '.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong saving rent.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+});
+
+document.getElementById('addExpenseBtn').addEventListener('click', async ()=>{
+  const month = document.getElementById('expenseMonth').value;
+  const amount = Number(document.getElementById('expenseAmount').value);
+  const note = document.getElementById('expenseNote').value.trim();
+  const statusMsg = document.getElementById('expenseStatus');
+
+  if(!month || !amount || amount <= 0){
+    statusMsg.textContent = 'Please choose a month and a valid amount.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  try{
+    await db.collection('expenses').add({
+      type: 'Other', forMonth: month, amount, note,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusMsg.textContent = 'Expense added.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    document.getElementById('expenseAmount').value = '';
+    document.getElementById('expenseNote').value = '';
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong adding this expense.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

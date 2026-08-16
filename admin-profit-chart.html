@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profit Chart</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-admission-fee.html">Admission Fee</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-spending.html">Spending</a>
+    <a href="admin-spending-history.html">Spending History</a>
+    <a href="admin-profit-chart.html" class="active">Profit Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+  <div class="card">
+    <h2>Profit Chart</h2>
+    <p class="sub">
+      Target = what we'd earn if every student paid in full (monthly fees + admission fees due that month).
+      Receive = what's actually been confirmed. Due = the gap. Profit = Receive minus Rent.
+      Main Profit = Profit minus other expenses.
+    </p>
+    <div class="table-wrap">
+      <table class="chart-table" id="profitTable">
+        <thead>
+          <tr><th>Month</th><th>Target</th><th>Receive</th><th>Due</th><th>Rent</th><th>Profit</th><th>Other Expenses</th><th>Main Profit</th></tr>
+        </thead>
+        <tbody id="profitBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+function monthKeyOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function monthLabelOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.toLocaleString('en-US',{month:'long', year:'numeric'});
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const studentsSnap = await db.collection('students').get();
+  const students = [];
+  studentsSnap.forEach(doc=> students.push(doc.data()));
+
+  const paymentsSnap = await db.collection('payments').where('status','==','Received').get();
+  const payments = [];
+  paymentsSnap.forEach(doc=> payments.push(doc.data()));
+
+  const expensesSnap = await db.collection('expenses').get();
+  const expenses = [];
+  expensesSnap.forEach(doc=> expenses.push({ id: doc.id, ...doc.data() }));
+
+  // 2 months back, 1 month back, current month
+  const months = [-2,-1,0].map(offset => ({ key: monthKeyOffset(offset), label: monthLabelOffset(offset) }));
+
+  const body = document.getElementById('profitBody');
+  body.innerHTML = '';
+
+  months.forEach(m=>{
+    let target = 0;
+    students.forEach(s=>{
+      if(s.startMonth && s.startMonth <= m.key){
+        target += Number(s.monthlyFee) || 0;
+      }
+      if(s.startMonth === m.key){
+        target += Number(s.admissionFee) || 0;
+      }
+    });
+
+    const receive = payments
+      .filter(p => p.forMonth === m.key)
+      .reduce((sum,p)=> sum + (Number(p.amount) || 0), 0);
+
+    const due = target - receive;
+
+    const rentEntry = expenses.find(e => e.type === 'Rent' && e.forMonth === m.key);
+    const rent = rentEntry ? (Number(rentEntry.amount) || 0) : 0;
+
+    const profit = receive - rent;
+
+    const otherExpenses = expenses
+      .filter(e => e.type === 'Other' && e.forMonth === m.key)
+      .reduce((sum,e)=> sum + (Number(e.amount) || 0), 0);
+
+    const mainProfit = profit - otherExpenses;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${m.label}</td>
+      <td>৳${target}</td>
+      <td>৳${receive}</td>
+      <td>৳${due}</td>
+      <td>৳${rent}</td>
+      <td>৳${profit}</td>
+      <td>৳${otherExpenses}</td>
+      <td><strong>৳${mainProfit}</strong></td>
+    `;
+    body.appendChild(row);
+  });
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+</script>
+</body>
+</html>
