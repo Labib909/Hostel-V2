@@ -15,6 +15,9 @@
     <a href="admin-payments.html" class="active">Payment Details</a>
     <a href="admin-admission-fee.html">Admission Fee</a>
     <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-spending.html">Spending</a>
+    <a href="admin-spending-history.html">Spending History</a>
+    <a href="admin-profit-chart.html">Profit Chart</a>
     <a href="admin-problems.html">Problem Box</a>
   </div>
   <button class="logout-btn" id="logoutBtn">Log out</button>
@@ -37,7 +40,7 @@
     <h2>Paid <span id="paidCount" style="color:var(--muted); font-weight:400; font-size:14px;"></span></h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Date Paid</th><th>Roll</th><th>Name</th><th>Amount</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Date Paid</th><th>Roll</th><th>Name</th><th>Type</th><th>Amount</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="paidBody"></tbody>
       </table>
     </div>
@@ -146,11 +149,13 @@ async function renderForSelectedMonth(){
     }
 
     const pillClass = p.status === 'Received' ? 'pill-received' : 'pill-pending';
+    const typeLabel = p.paymentType === 'admission' ? 'Admission Fee' : 'Monthly Fee';
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${dateLabel}</td>
       <td>${p.rollNumber || (student ? student.rollNumber : '') || '—'}</td>
       <td>${p.studentName || (student ? student.fullname : '') || '—'}</td>
+      <td>${typeLabel}</td>
       <td>৳${p.amount}</td>
       <td>${details}</td>
       <td><span class="pill ${pillClass}">${p.status || 'Pending'}</span></td>
