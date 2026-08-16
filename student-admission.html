@@ -17,9 +17,13 @@
 <div class="page hidden" id="mainContent">
   <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
 
+  <div class="locked-banner hidden" id="lockedBanner">
+    Your admission form has been approved and can no longer be edited. Contact the admin if something needs to change.
+  </div>
+
   <div class="card">
     <h1>Admission Form</h1>
-    <p class="sub">Fill this in once — you can come back and update it any time.</p>
+    <p class="sub" id="formSub">Fill this in once — you can come back and update it any time before it's approved.</p>
 
     <form id="admissionForm" novalidate>
       <div class="section-label first">I am a</div>
@@ -40,7 +44,6 @@
       <div id="studentFields" class="hidden">
         <div class="section-label">Academic Info</div>
         <div class="field" data-field="college"><label>College name</label><input type="text" id="a_college"><div class="err">Please enter the college name.</div></div>
-        <div class="field" data-field="coursename"><label>Course name</label><input type="text" id="a_coursename"><div class="err">Please enter the course name.</div></div>
         <div class="field" data-field="collegecourse"><label>College / course level</label>
           <select id="a_collegecourse"><option value="">Select level</option><option value="SSC">SSC</option><option value="HSC">HSC</option><option value="Honors">Honors</option></select>
           <div class="err">Please select a level.</div>
@@ -59,9 +62,27 @@
 
       <div class="section-label">Family Contacts</div>
       <div class="field" data-field="father"><label>Father's name</label><input type="text" id="a_father"><div class="err">Please enter the father's name.</div></div>
-      <div class="field" data-field="fathermobile"><label>Father's mobile number</label><input type="tel" id="a_fathermobile"><div class="err">Please enter a valid mobile number.</div></div>
+      <div class="field" data-field="fatherstatus">
+        <label>Is father alive?</label>
+        <div class="radio-group">
+          <label class="radio-pill" id="fatherAliveOpt"><input type="radio" name="fatherstatus" value="Alive" id="father_alive">Alive</label>
+          <label class="radio-pill" id="fatherDeadOpt"><input type="radio" name="fatherstatus" value="Dead" id="father_dead">Deceased</label>
+        </div>
+        <div class="err">Please choose an option.</div>
+      </div>
+      <div class="field hidden" data-field="fathermobile" id="fatherMobileField"><label>Father's mobile number</label><input type="tel" id="a_fathermobile"><div class="err">Please enter a valid mobile number.</div></div>
+
       <div class="field" data-field="mother"><label>Mother's name</label><input type="text" id="a_mother"><div class="err">Please enter the mother's name.</div></div>
-      <div class="field" data-field="mothermobile"><label>Mother's mobile number</label><input type="tel" id="a_mothermobile"><div class="err">Please enter a valid mobile number.</div></div>
+      <div class="field" data-field="motherstatus">
+        <label>Is mother alive?</label>
+        <div class="radio-group">
+          <label class="radio-pill" id="motherAliveOpt"><input type="radio" name="motherstatus" value="Alive" id="mother_alive">Alive</label>
+          <label class="radio-pill" id="motherDeadOpt"><input type="radio" name="motherstatus" value="Dead" id="mother_dead">Deceased</label>
+        </div>
+        <div class="err">Please choose an option.</div>
+      </div>
+      <div class="field hidden" data-field="mothermobile" id="motherMobileField"><label>Mother's mobile number</label><input type="tel" id="a_mothermobile"><div class="err">Please enter a valid mobile number.</div></div>
+
       <div class="field" data-field="sibling"><label>Brother / Sister name <span class="optional">(optional)</span></label><input type="text" id="a_siblingname"></div>
       <div class="field" data-field="siblingmobile"><label>Brother / Sister mobile number <span class="optional">(optional)</span></label><input type="tel" id="a_siblingmobile"></div>
       <div class="field" data-field="husband"><label>Husband name <span class="optional">(optional)</span></label><input type="text" id="a_husbandname"></div>
@@ -130,6 +151,36 @@ roleWorker.addEventListener('change', updateRoleUI);
 roleStudentOpt.addEventListener('click', ()=>{ roleStudent.checked = true; updateRoleUI(); });
 roleWorkerOpt.addEventListener('click', ()=>{ roleWorker.checked = true; updateRoleUI(); });
 
+const fatherAlive = document.getElementById('father_alive');
+const fatherDead = document.getElementById('father_dead');
+const fatherAliveOpt = document.getElementById('fatherAliveOpt');
+const fatherDeadOpt = document.getElementById('fatherDeadOpt');
+const fatherMobileField = document.getElementById('fatherMobileField');
+function updateFatherUI(){
+  fatherAliveOpt.classList.toggle('active', fatherAlive.checked);
+  fatherDeadOpt.classList.toggle('active', fatherDead.checked);
+  fatherMobileField.classList.toggle('hidden', !fatherAlive.checked);
+}
+fatherAlive.addEventListener('change', updateFatherUI);
+fatherDead.addEventListener('change', updateFatherUI);
+fatherAliveOpt.addEventListener('click', ()=>{ fatherAlive.checked = true; updateFatherUI(); });
+fatherDeadOpt.addEventListener('click', ()=>{ fatherDead.checked = true; updateFatherUI(); });
+
+const motherAlive = document.getElementById('mother_alive');
+const motherDead = document.getElementById('mother_dead');
+const motherAliveOpt = document.getElementById('motherAliveOpt');
+const motherDeadOpt = document.getElementById('motherDeadOpt');
+const motherMobileField = document.getElementById('motherMobileField');
+function updateMotherUI(){
+  motherAliveOpt.classList.toggle('active', motherAlive.checked);
+  motherDeadOpt.classList.toggle('active', motherDead.checked);
+  motherMobileField.classList.toggle('hidden', !motherAlive.checked);
+}
+motherAlive.addEventListener('change', updateMotherUI);
+motherDead.addEventListener('change', updateMotherUI);
+motherAliveOpt.addEventListener('click', ()=>{ motherAlive.checked = true; updateMotherUI(); });
+motherDeadOpt.addEventListener('click', ()=>{ motherDead.checked = true; updateMotherUI(); });
+
 const heardOnline = document.getElementById('heard_online');
 const heardPerson = document.getElementById('heard_person');
 const heardOnlineOpt = document.getElementById('heardOnlineOpt');
@@ -193,11 +244,20 @@ auth.onAuthStateChanged(async (user)=>{
 
   setVal('a_fullname', s.fullname); setVal('a_nickname', s.nickname);
   setVal('a_phone', s.phone || s.phoneLogin); setVal('a_whatsapp', s.whatsapp);
-  setVal('a_college', s.college); setVal('a_coursename', s.coursename);
+  setVal('a_college', s.college);
   setVal('a_collegecourse', s.collegecourse); setVal('a_courseyear', s.courseyear);
   setVal('a_jobplace', s.jobplace); setVal('a_jobplacemobile', s.jobplacemobile);
-  setVal('a_father', s.father); setVal('a_fathermobile', s.fathermobile);
-  setVal('a_mother', s.mother); setVal('a_mothermobile', s.mothermobile);
+
+  setVal('a_father', s.father);
+  if(s.fatherstatus === 'Alive'){ fatherAlive.checked = true; } else if(s.fatherstatus === 'Dead'){ fatherDead.checked = true; }
+  updateFatherUI();
+  setVal('a_fathermobile', s.fathermobile);
+
+  setVal('a_mother', s.mother);
+  if(s.motherstatus === 'Alive'){ motherAlive.checked = true; } else if(s.motherstatus === 'Dead'){ motherDead.checked = true; }
+  updateMotherUI();
+  setVal('a_mothermobile', s.mothermobile);
+
   setVal('a_siblingname', s.siblingname); setVal('a_siblingmobile', s.siblingmobile);
   setVal('a_husbandname', s.husbandname); setVal('a_husbandmobile', s.husbandmobile);
   setVal('a_address', s.address);
@@ -211,6 +271,14 @@ auth.onAuthStateChanged(async (user)=>{
     photoPreview.src = photoBase64;
     photoPreview.style.display = 'block';
     photoHint.textContent = 'Current photo on file (click to replace)';
+  }
+
+  if(s.admissionApproved){
+    document.getElementById('lockedBanner').classList.remove('hidden');
+    document.getElementById('formSub').textContent = 'This form has been approved and is locked.';
+    document.querySelectorAll('#admissionForm input, #admissionForm select, #admissionForm textarea').forEach(el=> el.disabled = true);
+    document.querySelectorAll('#admissionForm .role-option, #admissionForm .radio-pill, #admissionForm .photo-drop').forEach(el=> el.style.pointerEvents = 'none');
+    document.getElementById('admissionSubmitBtn').classList.add('hidden');
   }
 
   document.getElementById('loadingState').classList.add('hidden');
@@ -242,10 +310,9 @@ document.getElementById('admissionForm').addEventListener('submit', async functi
   const phone = requirePhone('a_phone','phone');
   const whatsapp = requirePhone('a_whatsapp','whatsapp');
 
-  let college='',coursename='',collegecourse='',courseyear='',jobplace='',jobplacemobile='';
+  let college='',collegecourse='',courseyear='',jobplace='',jobplacemobile='';
   if(role === 'student'){
     college = requireText('a_college','college');
-    coursename = requireText('a_coursename','coursename');
     collegecourse = requireText('a_collegecourse','collegecourse');
     courseyear = requireText('a_courseyear','courseyear');
   }else if(role === 'worker'){
@@ -254,9 +321,19 @@ document.getElementById('admissionForm').addEventListener('submit', async functi
   }
 
   const father = requireText('a_father','father');
-  const fathermobile = requirePhone('a_fathermobile','fathermobile');
+  const fatherstatus = fatherAlive.checked ? 'Alive' : (fatherDead.checked ? 'Dead' : '');
+  const fatherStatusField = form.querySelector('[data-field="fatherstatus"]');
+  if(!fatherstatus){ markInvalid(fatherStatusField); valid = false; } else { markValid(fatherStatusField); }
+  let fathermobile = '';
+  if(fatherstatus === 'Alive'){ fathermobile = requirePhone('a_fathermobile','fathermobile'); }
+
   const mother = requireText('a_mother','mother');
-  const mothermobile = requirePhone('a_mothermobile','mothermobile');
+  const motherstatus = motherAlive.checked ? 'Alive' : (motherDead.checked ? 'Dead' : '');
+  const motherStatusField = form.querySelector('[data-field="motherstatus"]');
+  if(!motherstatus){ markInvalid(motherStatusField); valid = false; } else { markValid(motherStatusField); }
+  let mothermobile = '';
+  if(motherstatus === 'Alive'){ mothermobile = requirePhone('a_mothermobile','mothermobile'); }
+
   const siblingname = val('a_siblingname');
   const siblingmobile = val('a_siblingmobile');
   const husbandname = val('a_husbandname');
@@ -292,9 +369,10 @@ document.getElementById('admissionForm').addEventListener('submit', async functi
   try{
     await db.collection('students').doc(currentUid).update({
       role, fullname, nickname, phone, whatsapp,
-      college, coursename, collegecourse, courseyear,
+      college, collegecourse, courseyear,
       jobplace, jobplacemobile,
-      father, fathermobile, mother, mothermobile,
+      father, fatherstatus, fathermobile,
+      mother, motherstatus, mothermobile,
       siblingname, siblingmobile, husbandname, husbandmobile,
       address, heard, personname, personmobile,
       startdate, duration, photoBase64,
