@@ -19,12 +19,43 @@
 
   <div class="card">
     <h2>Make a Payment</h2>
+
+    <div class="field" data-field="feeType">
+      <label>What are you paying?</label>
+      <div class="radio-group">
+        <label class="radio-pill" id="feeTypeMonthlyOpt"><input type="radio" name="feeType" value="monthly" id="feeType_monthly">Monthly Fee</label>
+        <label class="radio-pill" id="feeTypeAdmissionOpt"><input type="radio" name="feeType" value="admission" id="feeType_admission">Admission Fee</label>
+      </div>
+    </div>
+
     <div class="status error" id="blockedNotice" style="display:none; text-align:left; margin-bottom:16px;"></div>
+    <div class="status ok" id="infoNotice" style="display:none; text-align:left; margin-bottom:16px;"></div>
 
     <form id="paymentForm" novalidate>
-      <div class="field" data-field="forMonth">
-        <label>Which month is this payment for?</label>
-        <select id="p_forMonth"></select>
+
+      <!-- MONTHLY FEE -->
+      <div id="monthlyBlock" class="hidden">
+        <div class="field" data-field="forMonth">
+          <label>Which month is this payment for?</label>
+          <select id="p_forMonth"></select>
+        </div>
+        <div class="field">
+          <label>Amount (&#2547;)</label>
+          <input type="text" id="p_monthlyAmount" disabled>
+        </div>
+      </div>
+
+      <!-- ADMISSION FEE -->
+      <div id="admissionBlock" class="hidden">
+        <div class="field">
+          <label>Month</label>
+          <input type="text" id="p_admissionMonth" disabled>
+        </div>
+        <div class="field" data-field="admissionAmount">
+          <label>Amount (&#2547;)</label>
+          <input type="number" id="p_admissionAmount" min="1">
+          <div class="err">Please enter a valid amount.</div>
+        </div>
       </div>
 
       <div class="field" data-field="method">
@@ -61,12 +92,6 @@
         </div>
       </div>
 
-      <div class="field" data-field="amount">
-        <label>Amount (&#2547;)</label>
-        <input type="number" id="p_amount" min="1">
-        <div class="err">Please enter a valid amount.</div>
-      </div>
-
       <button type="submit" class="submit-btn teal" id="paymentSubmitBtn">Submit Payment</button>
       <div class="status" id="paymentStatus"></div>
     </form>
@@ -80,7 +105,8 @@
 <script>
 let currentUid = null;
 let currentStudentData = null;
-let approvedMonthsSet = new Set();
+let approvedMonthlyMonths = new Set();
+let admissionPaidSoFar = 0;
 
 document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
 
@@ -91,6 +117,11 @@ function monthLabel(offset){
 function monthKey(offset){
   const d = new Date(); d.setMonth(d.getMonth() + offset);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function labelForMonthKey(key){
+  if(!key) return '';
+  const d = new Date(key + '-01');
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 }
 
 auth.onAuthStateChanged(async (user)=>{
@@ -106,12 +137,12 @@ auth.onAuthStateChanged(async (user)=>{
   }
   currentStudentData = doc.data();
 
-  // Load which months already have a Received payment, to block re-paying them
   try{
     const snap = await db.collection('payments').where('studentUid','==',currentUid).get();
     snap.forEach(d=>{
       const p = d.data();
-      if(p.status === 'Received'){ approvedMonthsSet.add(p.forMonth); }
+      if(p.status === 'Received' && p.paymentType === 'monthly'){ approvedMonthlyMonths.add(p.forMonth); }
+      if(p.status === 'Received' && p.paymentType === 'admission'){ admissionPaidSoFar += Number(p.amount) || 0; }
     });
   }catch(err){ /* non-fatal */ }
 
@@ -121,18 +152,24 @@ auth.onAuthStateChanged(async (user)=>{
     <option value="${monthKey(1)}">${monthLabel(1)} (advance)</option>
     <option value="${monthKey(2)}">${monthLabel(2)} (advance)</option>
   `;
-  monthSelect.addEventListener('change', checkBlocked);
-  checkBlocked();
+  monthSelect.addEventListener('change', updateMonthlyAmount);
+
+  document.getElementById('p_admissionMonth').value = labelForMonthKey(currentStudentData.startMonth) || 'Not set — contact admin';
 
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
 });
 
-function checkBlocked(){
+function updateMonthlyAmount(){
+  document.getElementById('p_monthlyAmount').value = currentStudentData.monthlyFee ? ('৳' + currentStudentData.monthlyFee) : 'Not set — contact admin';
+  checkMonthlyBlocked();
+}
+
+function checkMonthlyBlocked(){
   const forMonth = document.getElementById('p_forMonth').value;
   const notice = document.getElementById('blockedNotice');
   const btn = document.getElementById('paymentSubmitBtn');
-  if(approvedMonthsSet.has(forMonth)){
+  if(approvedMonthlyMonths.has(forMonth)){
     notice.textContent = "You've already paid for this month and it's been confirmed — no need to pay again.";
     notice.style.display = 'block';
     btn.disabled = true;
@@ -141,6 +178,45 @@ function checkBlocked(){
     btn.disabled = false;
   }
 }
+
+function checkAdmissionBlocked(){
+  const notice = document.getElementById('blockedNotice');
+  const info = document.getElementById('infoNotice');
+  const btn = document.getElementById('paymentSubmitBtn');
+  const fee = Number(currentStudentData.admissionFee) || 0;
+  const remaining = Math.max(fee - admissionPaidSoFar, 0);
+
+  if(fee > 0 && admissionPaidSoFar >= fee){
+    notice.textContent = 'Your admission fee has been fully paid. No further payment needed.';
+    notice.style.display = 'block';
+    info.style.display = 'none';
+    btn.disabled = true;
+  }else{
+    notice.style.display = 'none';
+    info.textContent = `Admission fee: ৳${fee} total — ৳${admissionPaidSoFar} received so far, ৳${remaining} remaining.`;
+    info.style.display = 'block';
+    btn.disabled = false;
+  }
+}
+
+const feeTypeMonthly = document.getElementById('feeType_monthly');
+const feeTypeAdmission = document.getElementById('feeType_admission');
+const feeTypeMonthlyOpt = document.getElementById('feeTypeMonthlyOpt');
+const feeTypeAdmissionOpt = document.getElementById('feeTypeAdmissionOpt');
+const monthlyBlock = document.getElementById('monthlyBlock');
+const admissionBlock = document.getElementById('admissionBlock');
+function updateFeeTypeUI(){
+  feeTypeMonthlyOpt.classList.toggle('active', feeTypeMonthly.checked);
+  feeTypeAdmissionOpt.classList.toggle('active', feeTypeAdmission.checked);
+  monthlyBlock.classList.toggle('hidden', !feeTypeMonthly.checked);
+  admissionBlock.classList.toggle('hidden', !feeTypeAdmission.checked);
+  document.getElementById('blockedNotice').style.display = 'none';
+  document.getElementById('infoNotice').style.display = 'none';
+  if(feeTypeMonthly.checked){ updateMonthlyAmount(); }
+  else if(feeTypeAdmission.checked){ checkAdmissionBlocked(); }
+}
+feeTypeMonthlyOpt.addEventListener('click', ()=>{ feeTypeMonthly.checked = true; updateFeeTypeUI(); });
+feeTypeAdmissionOpt.addEventListener('click', ()=>{ feeTypeAdmission.checked = true; updateFeeTypeUI(); });
 
 const methodBkash = document.getElementById('method_bkash');
 const methodPerson = document.getElementById('method_person');
@@ -170,8 +246,40 @@ document.getElementById('paymentForm').addEventListener('submit', async function
   const statusMsg = document.getElementById('paymentStatus');
   statusMsg.style.display = 'none';
 
-  const forMonth = document.getElementById('p_forMonth').value;
-  if(approvedMonthsSet.has(forMonth)){ return; }
+  const paymentType = feeTypeMonthly.checked ? 'monthly' : (feeTypeAdmission.checked ? 'admission' : '');
+  if(!paymentType){
+    statusMsg.textContent = 'Please choose Monthly Fee or Admission Fee at the top.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  let forMonth = '', amount = 0;
+
+  if(paymentType === 'monthly'){
+    forMonth = document.getElementById('p_forMonth').value;
+    if(approvedMonthlyMonths.has(forMonth)) return;
+    amount = Number(currentStudentData.monthlyFee) || 0;
+    if(!amount){
+      statusMsg.textContent = 'Your monthly fee has not been set up yet — contact the admin.';
+      statusMsg.className = 'status error';
+      statusMsg.style.display = 'block';
+      return;
+    }
+  }else{
+    forMonth = currentStudentData.startMonth || '';
+    if(!forMonth){
+      statusMsg.textContent = 'Your start month has not been set up yet — contact the admin.';
+      statusMsg.className = 'status error';
+      statusMsg.style.display = 'block';
+      return;
+    }
+    const fee = Number(currentStudentData.admissionFee) || 0;
+    if(fee > 0 && admissionPaidSoFar >= fee) return;
+    amount = Number(val('p_admissionAmount'));
+    const amountField = form.querySelector('[data-field="admissionAmount"]');
+    if(!amount || amount <= 0){ markInvalid(amountField); valid = false; } else { markValid(amountField); }
+  }
 
   const method = methodBkash.checked ? 'bKash' : (methodPerson.checked ? 'Person' : '');
   const methodField = form.querySelector('[data-field="method"]');
@@ -194,10 +302,6 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     if(!personName){ markInvalid(personField); valid = false; } else { markValid(personField); }
   }
 
-  const amount = val('p_amount');
-  const amountField = form.querySelector('[data-field="amount"]');
-  if(!amount || Number(amount) <= 0){ markInvalid(amountField); valid = false; } else { markValid(amountField); }
-
   if(!valid){
     statusMsg.textContent = 'Please fill in the highlighted fields.';
     statusMsg.className = 'status error';
@@ -213,7 +317,7 @@ document.getElementById('paymentForm').addEventListener('submit', async function
       studentUid: currentUid,
       studentName: currentStudentData.fullname || '',
       rollNumber: currentStudentData.rollNumber || '',
-      forMonth, method, txnId, txnPhone, personName,
+      paymentType, forMonth, method, txnId, txnPhone, personName,
       amount: Number(amount),
       status: 'Pending',
       submittedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -221,10 +325,11 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     statusMsg.textContent = 'Payment submitted — it will show as Pending until confirmed.';
     statusMsg.className = 'status ok';
     statusMsg.style.display = 'block';
-    form.reset();
+    document.getElementById('p_txnId').value = '';
+    document.getElementById('p_txnPhone').value = '';
+    document.getElementById('p_personName').value = '';
+    document.getElementById('p_admissionAmount').value = '';
     document.querySelectorAll('#paymentForm .field').forEach(f=>f.classList.remove('invalid'));
-    bkashFields.classList.add('hidden');
-    personFields.classList.add('hidden');
   }catch(err){
     statusMsg.textContent = 'Something went wrong. Please try again.';
     statusMsg.className = 'status error';
