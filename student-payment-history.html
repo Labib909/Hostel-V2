@@ -21,7 +21,7 @@
     <h2>My Payment History</h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>For Month</th><th>Amount</th><th>Method</th><th>Details</th><th>Status</th></tr></thead>
+        <thead><tr><th>Type</th><th>For Month</th><th>Amount</th><th>Method</th><th>Details</th><th>Status</th></tr></thead>
         <tbody id="historyBody"></tbody>
       </table>
     </div>
@@ -85,7 +85,8 @@ async function loadHistory(){
       }
       const pillClass = p.status === 'Received' ? 'pill-received' : 'pill-pending';
       const row = document.createElement('tr');
-      row.innerHTML = `<td>${label}</td><td>৳${p.amount}</td><td>${p.method}</td><td>${details}</td><td><span class="pill ${pillClass}">${p.status || 'Pending'}</span></td>`;
+      const typeLabel = p.paymentType === 'admission' ? 'Admission Fee' : 'Monthly Fee';
+      row.innerHTML = `<td>${typeLabel}</td><td>${label}</td><td>৳${p.amount}</td><td>${p.method}</td><td>${details}</td><td><span class="pill ${pillClass}">${p.status || 'Pending'}</span></td>`;
       body.appendChild(row);
     });
   }catch(err){
