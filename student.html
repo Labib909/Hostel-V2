@@ -9,15 +9,21 @@
 <body>
 <div class="topbar">
   <div class="brand">Student Portal</div>
-  <div class="nav">
-    <a href="student-settings.html">Change Password</a>
-  </div>
   <button class="logout-btn" id="logoutBtn">Log out</button>
 </div>
 
 <div id="loadingState" class="loading">Loading...</div>
 
 <div class="page hidden" id="mainContent">
+
+  <a class="password-banner" href="student-settings.html">
+    <div>
+      <div class="ttl">🔒 Change Password</div>
+      <div class="desc">Keep your account secure — update it any time</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+  </a>
+
   <div class="card">
     <h1 id="welcomeMsg">Welcome</h1>
     <p class="sub" id="admissionNotice"></p>
@@ -34,7 +40,14 @@
         <div class="icon">৳</div>
         <div>
           Payment Form
-          <div class="desc">Submit a payment and view your history</div>
+          <div class="desc">Submit a payment</div>
+        </div>
+      </a>
+      <a class="big-btn history" href="student-payment-history.html">
+        <div class="icon">H</div>
+        <div>
+          Payment History
+          <div class="desc">See your past payments and their status</div>
         </div>
       </a>
       <a class="big-btn problem" href="student-problem.html">
@@ -71,8 +84,11 @@ auth.onAuthStateChanged(async (user)=>{
   if(!s.admissionSubmitted){
     document.getElementById('admissionNotice').textContent = "Please complete your Admission Form first.";
     document.getElementById('admissionDesc').textContent = 'Not completed yet — start here';
-  }else{
+  }else if(s.admissionApproved){
     document.getElementById('admissionNotice').textContent = '';
+    document.getElementById('admissionDesc').textContent = 'Approved — view only';
+  }else{
+    document.getElementById('admissionNotice').textContent = 'Your admission form is awaiting admin approval.';
     document.getElementById('admissionDesc').textContent = 'View or update your details';
   }
 
