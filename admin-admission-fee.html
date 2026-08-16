@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admission Fee</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-admission-fee.html" class="active">Admission Fee</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Admission Fee</h2>
+    <p class="sub">Standard fee is &#2547;2000, but you can set a different total per student (for discounts) and log partial payments as they come in.</p>
+    <div class="field" style="max-width:360px;">
+      <label>Select student</label>
+      <select id="studentSelect"></select>
+    </div>
+  </div>
+
+  <div class="card hidden" id="feeCard">
+    <h2 id="studentNameHeading">Fee Details</h2>
+
+    <div class="row-2" style="margin-bottom:8px;">
+      <div class="field">
+        <label>Total fee for this student (&#2547;)</label>
+        <input type="number" id="totalAmount" min="0">
+      </div>
+      <div class="field" style="display:flex; align-items:flex-end;">
+        <button class="submit-btn auto" id="saveTotalBtn">Save Total</button>
+      </div>
+    </div>
+
+    <div class="stat-grid" style="margin-bottom:20px;">
+      <div class="stat-box"><div class="num" id="statTotal">–</div><div class="label">Total fee</div></div>
+      <div class="stat-box teal"><div class="num" id="statPaid">–</div><div class="label">Paid so far</div></div>
+      <div class="stat-box gold"><div class="num" id="statRemaining">–</div><div class="label">Remaining</div></div>
+    </div>
+
+    <div class="section-label first">Add a Payment</div>
+    <div class="row-2">
+      <div class="field">
+        <label>Amount (&#2547;)</label>
+        <input type="number" id="entryAmount" min="1">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="entryDate">
+      </div>
+    </div>
+    <div class="field">
+      <label>Note <span class="optional">(optional)</span></label>
+      <input type="text" id="entryNote" placeholder="e.g. Paid in cash, half now half next week">
+    </div>
+    <button class="submit-btn auto" id="addEntryBtn">Add Payment</button>
+    <div class="status" id="statusMsg"></div>
+
+    <div class="section-label">Payment Log</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Amount</th><th>Note</th><th></th></tr></thead>
+        <tbody id="entriesBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="entriesEmpty">No payments logged yet.</div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+const DEFAULT_FEE = 2000;
+let allStudents = [];
+let currentFeeData = null;
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const snap = await db.collection('students').get();
+  allStudents = [];
+  snap.forEach(doc=> allStudents.push({ uid: doc.id, ...doc.data() }));
+  allStudents.sort((a,b)=> (a.fullname||'').localeCompare(b.fullname||''));
+
+  const select = document.getElementById('studentSelect');
+  select.innerHTML = '<option value="">Select a student</option>' +
+    allStudents.map(s => `<option value="${s.uid}">${s.fullname || '(unnamed)'} ${s.rollNumber ? '— Roll ' + s.rollNumber : ''}</option>`).join('');
+  select.addEventListener('change', loadFeeForSelected);
+
+  document.getElementById('entryDate').value = new Date().toISOString().slice(0,10);
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+
+async function loadFeeForSelected(){
+  const uid = document.getElementById('studentSelect').value;
+  if(!uid){
+    document.getElementById('feeCard').classList.add('hidden');
+    return;
+  }
+
+  const student = allStudents.find(s=>s.uid === uid);
+  document.getElementById('studentNameHeading').textContent = (student.fullname || '(unnamed)') + "'s Admission Fee";
+
+  const doc = await db.collection('admissionFees').doc(uid).get();
+  if(doc.exists){
+    currentFeeData = doc.data();
+  }else{
+    currentFeeData = { totalAmount: DEFAULT_FEE, entries: [] };
+  }
+
+  document.getElementById('totalAmount').value = currentFeeData.totalAmount;
+  renderFeeCard();
+  document.getElementById('feeCard').classList.remove('hidden');
+}
+
+function renderFeeCard(){
+  const entries = currentFeeData.entries || [];
+  const paid = entries.reduce((sum,e)=> sum + (Number(e.amount)||0), 0);
+  const total = Number(currentFeeData.totalAmount) || 0;
+  const remaining = Math.max(total - paid, 0);
+
+  document.getElementById('statTotal').textContent = '৳' + total;
+  document.getElementById('statPaid').textContent = '৳' + paid;
+  document.getElementById('statRemaining').textContent = '৳' + remaining;
+
+  const body = document.getElementById('entriesBody');
+  const empty = document.getElementById('entriesEmpty');
+  body.innerHTML = '';
+
+  if(entries.length === 0){
+    empty.classList.remove('hidden');
+  }else{
+    empty.classList.add('hidden');
+    const sorted = [...entries].sort((a,b)=> (b.ts||0) - (a.ts||0));
+    sorted.forEach(e=>{
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${e.date || '—'}</td><td>৳${e.amount}</td><td>${e.note || '—'}</td><td><button class="small-btn danger" data-ts="${e.ts}">Remove</button></td>`;
+      body.appendChild(row);
+    });
+  }
+
+  document.querySelectorAll('[data-ts]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Remove this payment entry?')) return;
+      const ts = Number(btn.getAttribute('data-ts'));
+      currentFeeData.entries = (currentFeeData.entries || []).filter(e => e.ts !== ts);
+      await saveFeeData();
+      renderFeeCard();
+    });
+  });
+}
+
+async function saveFeeData(){
+  const uid = document.getElementById('studentSelect').value;
+  await db.collection('admissionFees').doc(uid).set(currentFeeData, { merge: false });
+}
+
+document.getElementById('saveTotalBtn').addEventListener('click', async ()=>{
+  const uid = document.getElementById('studentSelect').value;
+  if(!uid) return;
+  const newTotal = Number(document.getElementById('totalAmount').value) || 0;
+  currentFeeData.totalAmount = newTotal;
+  await saveFeeData();
+  renderFeeCard();
+  const statusMsg = document.getElementById('statusMsg');
+  statusMsg.textContent = 'Total fee updated.';
+  statusMsg.className = 'status ok';
+  statusMsg.style.display = 'block';
+});
+
+document.getElementById('addEntryBtn').addEventListener('click', async ()=>{
+  const uid = document.getElementById('studentSelect').value;
+  const statusMsg = document.getElementById('statusMsg');
+  if(!uid){
+    statusMsg.textContent = 'Select a student first.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+  const amount = Number(document.getElementById('entryAmount').value);
+  const date = document.getElementById('entryDate').value;
+  const note = document.getElementById('entryNote').value.trim();
+
+  if(!amount || amount <= 0 || !date){
+    statusMsg.textContent = 'Please enter a valid amount and date.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  currentFeeData.entries = currentFeeData.entries || [];
+  currentFeeData.entries.push({ amount, date, note, ts: Date.now() });
+
+  try{
+    await saveFeeData();
+    renderFeeCard();
+    document.getElementById('entryAmount').value = '';
+    document.getElementById('entryNote').value = '';
+    statusMsg.textContent = 'Payment added.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong saving this payment.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

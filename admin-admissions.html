@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Admission</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html" class="active">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-admission-fee.html">Admission Fee</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+  <div class="card">
+    <h2>Student Admission Forms</h2>
+    <p class="sub">Click a student to view, edit, and approve their admission form.</p>
+    <button class="submit-btn auto" id="exportBtn" style="margin-bottom:20px;">Export All to CSV</button>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Roll</th><th>Phone</th><th>Type</th><th>Submitted</th><th>Status</th><th></th></tr></thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="studentsEmpty">No students yet.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+let allStudents = [];
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadStudents();
+});
+
+async function loadStudents(){
+  const snap = await db.collection('students').get();
+  allStudents = [];
+  snap.forEach(doc=> allStudents.push({ uid: doc.id, ...doc.data() }));
+
+  const body = document.getElementById('studentsBody');
+  const empty = document.getElementById('studentsEmpty');
+  body.innerHTML = '';
+
+  if(allStudents.length === 0){
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  allStudents.forEach(s=>{
+    let statusPill = '<span class="pill" style="background:#EEE;color:#888;">Not Started</span>';
+    if(s.admissionSubmitted && s.admissionApproved){ statusPill = '<span class="pill pill-received">Approved</span>'; }
+    else if(s.admissionSubmitted){ statusPill = '<span class="pill pill-pending">Awaiting Review</span>'; }
+
+    let dateLabel = '—';
+    if(s.admissionSubmittedAt && s.admissionSubmittedAt.toDate) dateLabel = s.admissionSubmittedAt.toDate().toLocaleDateString();
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${s.fullname || '(not filled in yet)'}</td>
+      <td>${s.rollNumber || '—'}</td>
+      <td>${s.phone || s.phoneLogin || '—'}</td>
+      <td>${s.role ? (s.role === 'worker' ? 'Worker' : 'Student') : '—'}</td>
+      <td>${dateLabel}</td>
+      <td>${statusPill}</td>
+      <td><a class="small-btn" href="admin-admission-detail.html?uid=${s.uid}">View / Edit</a></td>
+    `;
+    body.appendChild(row);
+  });
+}
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const headers = [
+    'Roll','Full Name','Nick Name','Phone','WhatsApp','Type',
+    'College','Level','Course Year','Job Place','Job Place Phone',
+    "Father's Name","Father Status","Father's Phone",
+    "Mother's Name","Mother Status","Mother's Phone",
+    'Sibling Name','Sibling Phone','Husband Name','Husband Phone',
+    'Address','Heard About Us','Referrer Name','Referrer Phone',
+    'Start Date','Duration','Admission Status'
+  ];
+  const rows = allStudents.map(s=>{
+    let status = 'Not Started';
+    if(s.admissionSubmitted && s.admissionApproved) status = 'Approved';
+    else if(s.admissionSubmitted) status = 'Awaiting Review';
+    return [
+      s.rollNumber, s.fullname, s.nickname, s.phone, s.whatsapp, s.role,
+      s.college, s.collegecourse, s.courseyear, s.jobplace, s.jobplacemobile,
+      s.father, s.fatherstatus, s.fathermobile,
+      s.mother, s.motherstatus, s.mothermobile,
+      s.siblingname, s.siblingmobile, s.husbandname, s.husbandmobile,
+      s.address, s.heard, s.personname, s.personmobile,
+      s.startdate, s.duration, status
+    ].map(v => v === undefined || v === null ? '' : v);
+  });
+
+  function csvEscape(v){
+    const str = String(v);
+    if(str.includes(',') || str.includes('"') || str.includes('\n')){
+      return '"' + str.replace(/"/g,'""') + '"';
+    }
+    return str;
+  }
+
+  const csvLines = [headers.map(csvEscape).join(',')];
+  rows.forEach(r => csvLines.push(r.map(csvEscape).join(',')));
+  const csvContent = csvLines.join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'admission-forms.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment History</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Student Portal</div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+  <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
+
+  <div class="card">
+    <h2>My Payment History</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>For Month</th><th>Amount</th><th>Method</th><th>Details</th><th>Status</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="historyEmpty">No payments submitted yet.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+let currentUid = null;
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+  currentUid = user.uid;
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadHistory();
+});
+
+async function loadHistory(){
+  const body = document.getElementById('historyBody');
+  const empty = document.getElementById('historyEmpty');
+  body.innerHTML = '';
+
+  try{
+    // No orderBy here on purpose — a where()+orderBy() combo needs a Firestore
+    // composite index that doesn't exist by default. We sort client-side instead.
+    const snap = await db.collection('payments').where('studentUid','==',currentUid).get();
+
+    if(snap.empty){
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    const rows = [];
+    snap.forEach(doc=> rows.push(doc.data()));
+    rows.sort((a,b)=>{
+      const ta = a.submittedAt && a.submittedAt.toDate ? a.submittedAt.toDate().getTime() : 0;
+      const tb = b.submittedAt && b.submittedAt.toDate ? b.submittedAt.toDate().getTime() : 0;
+      return tb - ta;
+    });
+
+    rows.forEach(p=>{
+      const d = new Date(p.forMonth + '-01');
+      const label = d.toLocaleString('en-US', { month:'long', year:'numeric' });
+      let details = '—';
+      if(p.method === 'bKash'){
+        const parts = [];
+        if(p.txnId) parts.push('ID: ' + p.txnId);
+        if(p.txnPhone) parts.push('Ph: ' + p.txnPhone);
+        details = parts.join(' / ') || '—';
+      }else if(p.method === 'Person'){
+        details = 'Paid to ' + (p.personName || '—');
+      }
+      const pillClass = p.status === 'Received' ? 'pill-received' : 'pill-pending';
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${label}</td><td>৳${p.amount}</td><td>${p.method}</td><td>${details}</td><td><span class="pill ${pillClass}">${p.status || 'Pending'}</span></td>`;
+      body.appendChild(row);
+    });
+  }catch(err){
+    empty.textContent = "Couldn't load payment history right now. Please refresh and try again.";
+    empty.classList.remove('hidden');
+  }
+}
+</script>
+</body>
+</html>

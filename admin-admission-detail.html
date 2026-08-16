@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admission Detail</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html" class="active">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-admission-fee.html">Admission Fee</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+  <p style="margin-bottom:20px;"><a class="back" href="admin-admissions.html">&larr; Back to all students</a></p>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:6px;">
+      <h1 id="pageTitle" style="margin:0;">Admission Detail</h1>
+      <span class="pill" id="statusPill"></span>
+    </div>
+    <p class="sub" id="statusSub"></p>
+    <button class="submit-btn auto teal" id="approveBtn" style="margin-bottom:10px;">Approve Admission</button>
+
+    <form id="admissionForm" novalidate>
+      <div class="section-label first">I am a</div>
+      <div class="field" data-field="role">
+        <div class="role-toggle">
+          <label class="role-option" id="roleStudentOpt"><input type="radio" name="role" value="student" id="role_student">Student</label>
+          <label class="role-option" id="roleWorkerOpt"><input type="radio" name="role" value="worker" id="role_worker">Worker</label>
+        </div>
+      </div>
+
+      <div class="section-label">Basic Info</div>
+      <div class="field"><label>Full name</label><input type="text" id="a_fullname"></div>
+      <div class="field"><label>Nick name</label><input type="text" id="a_nickname"></div>
+      <div class="field"><label>Phone number</label><input type="tel" id="a_phone"></div>
+      <div class="field"><label>WhatsApp number</label><input type="tel" id="a_whatsapp"></div>
+
+      <div id="studentFields" class="hidden">
+        <div class="section-label">Academic Info</div>
+        <div class="field"><label>College name</label><input type="text" id="a_college"></div>
+        <div class="field"><label>College / course level</label>
+          <select id="a_collegecourse"><option value="">Select level</option><option value="SSC">SSC</option><option value="HSC">HSC</option><option value="Honors">Honors</option></select>
+        </div>
+        <div class="field"><label>Course year</label>
+          <select id="a_courseyear"><option value="">Select year</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="Complete">Complete</option></select>
+        </div>
+      </div>
+
+      <div id="workerFields" class="hidden">
+        <div class="section-label">Job Info</div>
+        <div class="field"><label>Job place name</label><input type="text" id="a_jobplace"></div>
+        <div class="field"><label>Job place mobile number</label><input type="tel" id="a_jobplacemobile"></div>
+      </div>
+
+      <div class="section-label">Family Contacts</div>
+      <div class="field"><label>Father's name</label><input type="text" id="a_father"></div>
+      <div class="field">
+        <label>Is father alive?</label>
+        <div class="radio-group">
+          <label class="radio-pill" id="fatherAliveOpt"><input type="radio" name="fatherstatus" value="Alive" id="father_alive">Alive</label>
+          <label class="radio-pill" id="fatherDeadOpt"><input type="radio" name="fatherstatus" value="Dead" id="father_dead">Deceased</label>
+        </div>
+      </div>
+      <div class="field hidden" id="fatherMobileField"><label>Father's mobile number</label><input type="tel" id="a_fathermobile"></div>
+
+      <div class="field"><label>Mother's name</label><input type="text" id="a_mother"></div>
+      <div class="field">
+        <label>Is mother alive?</label>
+        <div class="radio-group">
+          <label class="radio-pill" id="motherAliveOpt"><input type="radio" name="motherstatus" value="Alive" id="mother_alive">Alive</label>
+          <label class="radio-pill" id="motherDeadOpt"><input type="radio" name="motherstatus" value="Dead" id="mother_dead">Deceased</label>
+        </div>
+      </div>
+      <div class="field hidden" id="motherMobileField"><label>Mother's mobile number</label><input type="tel" id="a_mothermobile"></div>
+
+      <div class="field"><label>Brother / Sister name</label><input type="text" id="a_siblingname"></div>
+      <div class="field"><label>Brother / Sister mobile number</label><input type="tel" id="a_siblingmobile"></div>
+      <div class="field"><label>Husband name</label><input type="text" id="a_husbandname"></div>
+      <div class="field"><label>Husband mobile number</label><input type="tel" id="a_husbandmobile"></div>
+
+      <div class="section-label">Address &amp; Referral</div>
+      <div class="field"><label>Permanent address</label><textarea id="a_address"></textarea></div>
+      <div class="field">
+        <label>Where did you get our news?</label>
+        <div class="radio-group">
+          <label class="radio-pill" id="heardOnlineOpt"><input type="radio" name="heard" value="Online Ad" id="heard_online">Online Ad</label>
+          <label class="radio-pill" id="heardPersonOpt"><input type="radio" name="heard" value="Person" id="heard_person">Person</label>
+        </div>
+      </div>
+      <div id="personFields" class="hidden">
+        <div class="field"><label>Person's name</label><input type="text" id="a_personname"></div>
+        <div class="field"><label>Person's mobile number</label><input type="tel" id="a_personmobile"></div>
+      </div>
+
+      <div class="section-label">Stay Details</div>
+      <div class="field"><label>Starting date</label><input type="date" id="a_startdate"></div>
+      <div class="field"><label>How long do they want to stay?</label>
+        <select id="a_duration"><option value="">Select duration</option><option value="1 Month">1 Month</option><option value="3 Months">3 Months</option><option value="6 Months">6 Months</option><option value="1 Year">1 Year</option><option value="More than 1 Year">More than 1 Year</option></select>
+      </div>
+
+      <div class="section-label">Photo</div>
+      <div class="field">
+        <img id="photoPreview" style="width:100px; height:100px; border-radius:50%; object-fit:cover; display:none; margin-bottom:8px;">
+      </div>
+
+      <button type="submit" class="submit-btn" id="saveBtn">Save Changes</button>
+      <div class="status" id="statusMsg"></div>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+const params = new URLSearchParams(window.location.search);
+const targetUid = params.get('uid');
+let currentApproved = false;
+
+function val(id){ return document.getElementById(id).value.trim(); }
+function setVal(id, v){ document.getElementById(id).value = v || ''; }
+
+const roleStudent = document.getElementById('role_student');
+const roleWorker = document.getElementById('role_worker');
+const roleStudentOpt = document.getElementById('roleStudentOpt');
+const roleWorkerOpt = document.getElementById('roleWorkerOpt');
+const studentFields = document.getElementById('studentFields');
+const workerFields = document.getElementById('workerFields');
+function updateRoleUI(){
+  roleStudentOpt.classList.toggle('active', roleStudent.checked);
+  roleWorkerOpt.classList.toggle('active', roleWorker.checked);
+  studentFields.classList.toggle('hidden', !roleStudent.checked);
+  workerFields.classList.toggle('hidden', !roleWorker.checked);
+}
+roleStudentOpt.addEventListener('click', ()=>{ roleStudent.checked = true; updateRoleUI(); });
+roleWorkerOpt.addEventListener('click', ()=>{ roleWorker.checked = true; updateRoleUI(); });
+
+const fatherAlive = document.getElementById('father_alive');
+const fatherDead = document.getElementById('father_dead');
+const fatherAliveOpt = document.getElementById('fatherAliveOpt');
+const fatherDeadOpt = document.getElementById('fatherDeadOpt');
+const fatherMobileField = document.getElementById('fatherMobileField');
+function updateFatherUI(){
+  fatherAliveOpt.classList.toggle('active', fatherAlive.checked);
+  fatherDeadOpt.classList.toggle('active', fatherDead.checked);
+  fatherMobileField.classList.toggle('hidden', !fatherAlive.checked);
+}
+fatherAliveOpt.addEventListener('click', ()=>{ fatherAlive.checked = true; updateFatherUI(); });
+fatherDeadOpt.addEventListener('click', ()=>{ fatherDead.checked = true; updateFatherUI(); });
+
+const motherAlive = document.getElementById('mother_alive');
+const motherDead = document.getElementById('mother_dead');
+const motherAliveOpt = document.getElementById('motherAliveOpt');
+const motherDeadOpt = document.getElementById('motherDeadOpt');
+const motherMobileField = document.getElementById('motherMobileField');
+function updateMotherUI(){
+  motherAliveOpt.classList.toggle('active', motherAlive.checked);
+  motherDeadOpt.classList.toggle('active', motherDead.checked);
+  motherMobileField.classList.toggle('hidden', !motherAlive.checked);
+}
+motherAliveOpt.addEventListener('click', ()=>{ motherAlive.checked = true; updateMotherUI(); });
+motherDeadOpt.addEventListener('click', ()=>{ motherDead.checked = true; updateMotherUI(); });
+
+const heardOnline = document.getElementById('heard_online');
+const heardPerson = document.getElementById('heard_person');
+const heardOnlineOpt = document.getElementById('heardOnlineOpt');
+const heardPersonOpt = document.getElementById('heardPersonOpt');
+const personFields = document.getElementById('personFields');
+function updateHeardUI(){
+  heardOnlineOpt.classList.toggle('active', heardOnline.checked);
+  heardPersonOpt.classList.toggle('active', heardPerson.checked);
+  personFields.classList.toggle('hidden', !heardPerson.checked);
+}
+heardOnlineOpt.addEventListener('click', ()=>{ heardOnline.checked = true; updateHeardUI(); });
+heardPersonOpt.addEventListener('click', ()=>{ heardPerson.checked = true; updateHeardUI(); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  if(!targetUid){
+    alert('No student specified.');
+    window.location.href = 'admin-admissions.html';
+    return;
+  }
+
+  const doc = await db.collection('students').doc(targetUid).get();
+  if(!doc.exists){
+    alert('Student not found.');
+    window.location.href = 'admin-admissions.html';
+    return;
+  }
+  const s = doc.data();
+  currentApproved = !!s.admissionApproved;
+
+  document.getElementById('pageTitle').textContent = s.fullname || 'Admission Detail';
+  updateStatusUI();
+
+  if(s.role === 'student'){ roleStudent.checked = true; } else if(s.role === 'worker'){ roleWorker.checked = true; }
+  updateRoleUI();
+
+  setVal('a_fullname', s.fullname); setVal('a_nickname', s.nickname);
+  setVal('a_phone', s.phone || s.phoneLogin); setVal('a_whatsapp', s.whatsapp);
+  setVal('a_college', s.college);
+  setVal('a_collegecourse', s.collegecourse); setVal('a_courseyear', s.courseyear);
+  setVal('a_jobplace', s.jobplace); setVal('a_jobplacemobile', s.jobplacemobile);
+
+  setVal('a_father', s.father);
+  if(s.fatherstatus === 'Alive'){ fatherAlive.checked = true; } else if(s.fatherstatus === 'Dead'){ fatherDead.checked = true; }
+  updateFatherUI();
+  setVal('a_fathermobile', s.fathermobile);
+
+  setVal('a_mother', s.mother);
+  if(s.motherstatus === 'Alive'){ motherAlive.checked = true; } else if(s.motherstatus === 'Dead'){ motherDead.checked = true; }
+  updateMotherUI();
+  setVal('a_mothermobile', s.mothermobile);
+
+  setVal('a_siblingname', s.siblingname); setVal('a_siblingmobile', s.siblingmobile);
+  setVal('a_husbandname', s.husbandname); setVal('a_husbandmobile', s.husbandmobile);
+  setVal('a_address', s.address);
+  if(s.heard === 'Online Ad'){ heardOnline.checked = true; } else if(s.heard === 'Person'){ heardPerson.checked = true; }
+  updateHeardUI();
+  setVal('a_personname', s.personname); setVal('a_personmobile', s.personmobile);
+  setVal('a_startdate', s.startdate); setVal('a_duration', s.duration);
+
+  if(s.photoBase64){
+    const img = document.getElementById('photoPreview');
+    img.src = s.photoBase64;
+    img.style.display = 'block';
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+
+function updateStatusUI(){
+  const pill = document.getElementById('statusPill');
+  const sub = document.getElementById('statusSub');
+  const approveBtn = document.getElementById('approveBtn');
+  if(currentApproved){
+    pill.textContent = 'Approved';
+    pill.className = 'pill pill-received';
+    sub.textContent = 'This admission has been approved. The student can no longer edit it — you still can.';
+    approveBtn.classList.add('hidden');
+  }else{
+    pill.textContent = 'Awaiting Review';
+    pill.className = 'pill pill-pending';
+    sub.textContent = 'The student can still edit this until you approve it.';
+    approveBtn.classList.remove('hidden');
+  }
+}
+
+document.getElementById('approveBtn').addEventListener('click', async ()=>{
+  if(!confirm('Approve this admission form? The student will no longer be able to edit it.')) return;
+  await db.collection('students').doc(targetUid).update({ admissionApproved: true });
+  currentApproved = true;
+  updateStatusUI();
+});
+
+document.getElementById('admissionForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const role = roleStudent.checked ? 'student' : (roleWorker.checked ? 'worker' : '');
+  const fatherstatus = fatherAlive.checked ? 'Alive' : (fatherDead.checked ? 'Dead' : '');
+  const motherstatus = motherAlive.checked ? 'Alive' : (motherDead.checked ? 'Dead' : '');
+  const heard = heardOnline.checked ? 'Online Ad' : (heardPerson.checked ? 'Person' : '');
+
+  const statusMsg = document.getElementById('statusMsg');
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try{
+    await db.collection('students').doc(targetUid).update({
+      role,
+      fullname: val('a_fullname'), nickname: val('a_nickname'),
+      phone: val('a_phone'), whatsapp: val('a_whatsapp'),
+      college: val('a_college'), collegecourse: val('a_collegecourse'), courseyear: val('a_courseyear'),
+      jobplace: val('a_jobplace'), jobplacemobile: val('a_jobplacemobile'),
+      father: val('a_father'), fatherstatus, fathermobile: fatherstatus === 'Alive' ? val('a_fathermobile') : '',
+      mother: val('a_mother'), motherstatus, mothermobile: motherstatus === 'Alive' ? val('a_mothermobile') : '',
+      siblingname: val('a_siblingname'), siblingmobile: val('a_siblingmobile'),
+      husbandname: val('a_husbandname'), husbandmobile: val('a_husbandmobile'),
+      address: val('a_address'), heard,
+      personname: heard === 'Person' ? val('a_personname') : '',
+      personmobile: heard === 'Person' ? val('a_personmobile') : '',
+      startdate: val('a_startdate'), duration: val('a_duration')
+    });
+    statusMsg.textContent = 'Saved successfully.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong saving. Please try again.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Save Changes';
+});
+</script>
+</body>
+</html>
