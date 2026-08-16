@@ -119,3 +119,36 @@ th{ color:var(--muted); font-weight:600; font-size:11.5px; text-transform:upperc
   padding:12px 14px; border-radius:8px; margin-bottom:20px;
 }
 .mono{ font-family:monospace; font-size:12.5px; }
+
+.big-btn.history .icon{ background:#5B6C87; }
+
+.password-banner{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  background:linear-gradient(135deg,#FBEFE6,#F3E4C8); border:1.5px solid var(--gold);
+  border-radius:12px; padding:18px 20px; margin-bottom:20px; text-decoration:none; color:var(--ink);
+}
+.password-banner .ttl{ font-weight:700; font-size:15px; }
+.password-banner .desc{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+.password-banner .arrow{ font-size:22px; color:var(--gold); }
+
+.pill{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
+.pill-pending{ background:#FBEFE6; color:#8A5A20; }
+.pill-received{ background:#E6F0EC; color:var(--teal); }
+.pill-locked{ background:#E9EBF5; color:var(--ink-soft); }
+
+.chart-table th, .chart-table td{ text-align:center; white-space:nowrap; padding:8px 10px; }
+.chart-table th:first-child, .chart-table td:first-child,
+.chart-table th:nth-child(2), .chart-table td:nth-child(2){ text-align:left; position:sticky; left:0; background:var(--card); }
+.chart-table th:nth-child(2), .chart-table td:nth-child(2){ left:60px; }
+.dot-paid{ color:var(--teal); font-size:17px; }
+.dash{ color:var(--muted); }
+
+.small-btn{ padding:5px 11px; font-size:12px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; color:var(--ink-soft); margin-right:4px; }
+.small-btn.danger{ border-color:var(--error); color:var(--error); }
+.small-btn.teal{ border-color:var(--teal); color:var(--teal); }
+.small-btn:hover{ opacity:0.8; }
+
+.locked-banner{
+  background:#E9EBF5; border:1px solid #C9CEE0; color:var(--ink-soft); font-size:13px;
+  padding:12px 14px; border-radius:8px; margin-bottom:20px;
+}
