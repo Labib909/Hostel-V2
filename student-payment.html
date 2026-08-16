@@ -19,48 +19,57 @@
 
   <div class="card">
     <h2>Make a Payment</h2>
+    <div class="status error" id="blockedNotice" style="display:none; text-align:left; margin-bottom:16px;"></div>
+
     <form id="paymentForm" novalidate>
       <div class="field" data-field="forMonth">
         <label>Which month is this payment for?</label>
         <select id="p_forMonth"></select>
       </div>
+
       <div class="field" data-field="method">
         <label>Payment method</label>
-        <select id="p_method">
-          <option value="">Select a method</option>
-          <option value="bKash">bKash</option>
-          <option value="Nagad">Nagad</option>
-          <option value="Rocket">Rocket</option>
-          <option value="Bank Transfer">Bank Transfer</option>
-          <option value="Cash">Cash</option>
-          <option value="Other">Other</option>
-        </select>
-        <div class="err">Please select a payment method.</div>
+        <div class="radio-group">
+          <label class="radio-pill" id="methodBkashOpt"><input type="radio" name="method" value="bKash" id="method_bkash">bKash</label>
+          <label class="radio-pill" id="methodPersonOpt"><input type="radio" name="method" value="Person" id="method_person">Person</label>
+        </div>
+        <div class="err">Please choose a payment method.</div>
       </div>
+
+      <div id="bkashFields" class="hidden">
+        <p class="sub" style="margin:-6px 0 14px;">Fill in the transaction ID or the phone number used — at least one, both is fine too.</p>
+        <div class="field" data-field="txnId">
+          <label>Transaction ID <span class="optional">(fill this or the phone number below)</span></label>
+          <input type="text" id="p_txnId">
+        </div>
+        <div class="field" data-field="txnPhone">
+          <label>Transaction phone number <span class="optional">(fill this or the ID above)</span></label>
+          <input type="tel" id="p_txnPhone">
+        </div>
+        <div class="err" id="bkashErr" style="display:none; color:var(--error); font-size:12px; margin:-10px 0 16px;">Please fill in the transaction ID or the phone number.</div>
+      </div>
+
+      <div id="personFields" class="hidden">
+        <div class="field" data-field="personName">
+          <label>Paid to</label>
+          <select id="p_personName">
+            <option value="">Select a person</option>
+            <option value="Mithila">Mithila</option>
+            <option value="Sudebi">Sudebi</option>
+          </select>
+          <div class="err">Please select who you paid.</div>
+        </div>
+      </div>
+
       <div class="field" data-field="amount">
         <label>Amount (&#2547;)</label>
         <input type="number" id="p_amount" min="1">
         <div class="err">Please enter a valid amount.</div>
       </div>
-      <div class="field" data-field="txn">
-        <label>Transaction ID</label>
-        <input type="text" id="p_txn">
-        <div class="err">Please enter the transaction ID.</div>
-      </div>
+
       <button type="submit" class="submit-btn teal" id="paymentSubmitBtn">Submit Payment</button>
       <div class="status" id="paymentStatus"></div>
     </form>
-  </div>
-
-  <div class="card">
-    <h2>My Payment History</h2>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>For Month</th><th>Amount</th><th>Method</th><th>Txn ID</th></tr></thead>
-        <tbody id="historyBody"></tbody>
-      </table>
-    </div>
-    <div class="empty hidden" id="historyEmpty">No payments submitted yet.</div>
   </div>
 </div>
 
@@ -71,6 +80,7 @@
 <script>
 let currentUid = null;
 let currentStudentData = null;
+let approvedMonthsSet = new Set();
 
 document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
 
@@ -96,17 +106,58 @@ auth.onAuthStateChanged(async (user)=>{
   }
   currentStudentData = doc.data();
 
+  // Load which months already have a Received payment, to block re-paying them
+  try{
+    const snap = await db.collection('payments').where('studentUid','==',currentUid).get();
+    snap.forEach(d=>{
+      const p = d.data();
+      if(p.status === 'Received'){ approvedMonthsSet.add(p.forMonth); }
+    });
+  }catch(err){ /* non-fatal */ }
+
   const monthSelect = document.getElementById('p_forMonth');
   monthSelect.innerHTML = `
     <option value="${monthKey(0)}">${monthLabel(0)} (this month)</option>
     <option value="${monthKey(1)}">${monthLabel(1)} (advance)</option>
     <option value="${monthKey(2)}">${monthLabel(2)} (advance)</option>
   `;
+  monthSelect.addEventListener('change', checkBlocked);
+  checkBlocked();
 
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
-  loadPaymentHistory();
 });
+
+function checkBlocked(){
+  const forMonth = document.getElementById('p_forMonth').value;
+  const notice = document.getElementById('blockedNotice');
+  const btn = document.getElementById('paymentSubmitBtn');
+  if(approvedMonthsSet.has(forMonth)){
+    notice.textContent = "You've already paid for this month and it's been confirmed — no need to pay again.";
+    notice.style.display = 'block';
+    btn.disabled = true;
+  }else{
+    notice.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+const methodBkash = document.getElementById('method_bkash');
+const methodPerson = document.getElementById('method_person');
+const methodBkashOpt = document.getElementById('methodBkashOpt');
+const methodPersonOpt = document.getElementById('methodPersonOpt');
+const bkashFields = document.getElementById('bkashFields');
+const personFields = document.getElementById('personFields');
+function updateMethodUI(){
+  methodBkashOpt.classList.toggle('active', methodBkash.checked);
+  methodPersonOpt.classList.toggle('active', methodPerson.checked);
+  bkashFields.classList.toggle('hidden', !methodBkash.checked);
+  personFields.classList.toggle('hidden', !methodPerson.checked);
+}
+methodBkash.addEventListener('change', updateMethodUI);
+methodPerson.addEventListener('change', updateMethodUI);
+methodBkashOpt.addEventListener('click', ()=>{ methodBkash.checked = true; updateMethodUI(); });
+methodPersonOpt.addEventListener('click', ()=>{ methodPerson.checked = true; updateMethodUI(); });
 
 function markValid(el){ el.classList.remove('invalid'); }
 function markInvalid(el){ el.classList.add('invalid'); }
@@ -120,19 +171,39 @@ document.getElementById('paymentForm').addEventListener('submit', async function
   statusMsg.style.display = 'none';
 
   const forMonth = document.getElementById('p_forMonth').value;
-  const method = val('p_method');
+  if(approvedMonthsSet.has(forMonth)){ return; }
+
+  const method = methodBkash.checked ? 'bKash' : (methodPerson.checked ? 'Person' : '');
   const methodField = form.querySelector('[data-field="method"]');
   if(!method){ markInvalid(methodField); valid = false; } else { markValid(methodField); }
+
+  let txnId = '', txnPhone = '', personName = '';
+  const bkashErr = document.getElementById('bkashErr');
+  bkashErr.style.display = 'none';
+
+  if(method === 'bKash'){
+    txnId = val('p_txnId');
+    txnPhone = val('p_txnPhone');
+    if(!txnId && !txnPhone){
+      bkashErr.style.display = 'block';
+      valid = false;
+    }
+  }else if(method === 'Person'){
+    personName = val('p_personName');
+    const personField = form.querySelector('[data-field="personName"]');
+    if(!personName){ markInvalid(personField); valid = false; } else { markValid(personField); }
+  }
 
   const amount = val('p_amount');
   const amountField = form.querySelector('[data-field="amount"]');
   if(!amount || Number(amount) <= 0){ markInvalid(amountField); valid = false; } else { markValid(amountField); }
 
-  const txn = val('p_txn');
-  const txnField = form.querySelector('[data-field="txn"]');
-  if(!txn){ markInvalid(txnField); valid = false; } else { markValid(txnField); }
-
-  if(!valid) return;
+  if(!valid){
+    statusMsg.textContent = 'Please fill in the highlighted fields.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
 
   const btn = document.getElementById('paymentSubmitBtn');
   btn.disabled = true; btn.textContent = 'Submitting...';
@@ -142,15 +213,18 @@ document.getElementById('paymentForm').addEventListener('submit', async function
       studentUid: currentUid,
       studentName: currentStudentData.fullname || '',
       rollNumber: currentStudentData.rollNumber || '',
-      forMonth, method, amount: Number(amount), txn,
+      forMonth, method, txnId, txnPhone, personName,
+      amount: Number(amount),
+      status: 'Pending',
       submittedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    statusMsg.textContent = 'Payment submitted successfully.';
+    statusMsg.textContent = 'Payment submitted — it will show as Pending until confirmed.';
     statusMsg.className = 'status ok';
     statusMsg.style.display = 'block';
     form.reset();
     document.querySelectorAll('#paymentForm .field').forEach(f=>f.classList.remove('invalid'));
-    loadPaymentHistory();
+    bkashFields.classList.add('hidden');
+    personFields.classList.add('hidden');
   }catch(err){
     statusMsg.textContent = 'Something went wrong. Please try again.';
     statusMsg.className = 'status error';
@@ -158,26 +232,6 @@ document.getElementById('paymentForm').addEventListener('submit', async function
   }
   btn.disabled = false; btn.textContent = 'Submit Payment';
 });
-
-async function loadPaymentHistory(){
-  const body = document.getElementById('historyBody');
-  const empty = document.getElementById('historyEmpty');
-  body.innerHTML = '';
-  const snap = await db.collection('payments').where('studentUid','==',currentUid).orderBy('submittedAt','desc').get();
-  if(snap.empty){
-    empty.classList.remove('hidden');
-    return;
-  }
-  empty.classList.add('hidden');
-  snap.forEach(doc=>{
-    const p = doc.data();
-    const d = new Date(p.forMonth + '-01');
-    const label = d.toLocaleString('en-US', { month:'long', year:'numeric' });
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${label}</td><td>৳${p.amount}</td><td>${p.method}</td><td>${p.txn}</td>`;
-    body.appendChild(row);
-  });
-}
 </script>
 </body>
 </html>
