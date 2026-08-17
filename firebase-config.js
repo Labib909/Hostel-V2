@@ -11,7 +11,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+// Only pages that load the firebase-storage-compat.js script (photo upload
+// pages) will actually use this — guarded so other pages don't error out.
+const storage = (typeof firebase.storage === 'function') ? firebase.storage() : null;
 
+// Firebase Auth needs an email format internally, but students/admin log in
+// with just a phone number. This turns a phone number into a consistent
+// internal address, e.g. "01712345678" -> "01712345678@studentportal.app"
 function phoneToAuthEmail(phone){
   const digits = phone.replace(/[^0-9]/g, '');
   return digits + '@studentportal.app';
