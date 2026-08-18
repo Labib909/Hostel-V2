@@ -11,9 +11,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-// Only pages that load the firebase-storage-compat.js script (photo upload
-// pages) will actually use this — guarded so other pages don't error out.
-const storage = (typeof firebase.storage === 'function') ? firebase.storage() : null;
+
+// Google Apps Script Web App URL that saves admission form submissions
+// (including the photo) into a Google Sheet + Drive folder. See SETUP-SHEETS.md.
+const ADMISSION_SHEET_SCRIPT_URL = "PASTE_YOUR_ADMISSION_SCRIPT_URL_HERE";
+// Optional: paste your Google Sheet's normal share URL here to get a
+// quick "Open Photos Sheet" button in the admin panel. Leave blank to skip.
+const ADMISSION_SHEET_VIEW_URL = "";
 
 // Firebase Auth needs an email format internally, but students/admin log in
 // with just a phone number. This turns a phone number into a consistent
