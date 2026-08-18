@@ -103,20 +103,25 @@
       </div>
 
       <div class="section-label">Stay Details</div>
-      <div class="field" data-field="startdate"><label>Starting date</label><input type="date" id="a_startdate"><div class="err">Please choose a starting date.</div></div>
+      <div class="field">
+        <label>Starting month</label>
+        <input type="text" id="a_startmonth" disabled>
+        <div class="optional" style="margin-top:5px;">Set by the admin when your account was created — contact them if this needs to change.</div>
+      </div>
       <div class="field" data-field="duration"><label>How long do you want to stay?</label>
         <select id="a_duration"><option value="">Select duration</option><option value="1 Month">1 Month</option><option value="3 Months">3 Months</option><option value="6 Months">6 Months</option><option value="1 Year">1 Year</option><option value="More than 1 Year">More than 1 Year</option></select>
         <div class="err">Please select a duration.</div>
       </div>
 
       <div class="section-label">Photo</div>
+      <p class="sub" style="margin-top:-8px;">Your photo is saved to a Google Sheet, not shown here in the admin panel.</p>
       <div class="field" data-field="photo"><label>Upload picture</label>
         <label class="photo-drop" id="photoDrop">
           <img class="photo-preview" id="photoPreview">
-          <div class="hint" id="photoHint">Click to upload a photo (JPG or PNG, under 50MB)</div>
+          <div class="hint" id="photoHint">Click to upload a photo (JPG or PNG)</div>
           <input type="file" id="a_photo" accept="image/*">
         </label>
-        <div class="err">Please upload a photo under 50MB.</div>
+        <div class="err">Please upload a photo.</div>
       </div>
 
       <button type="submit" class="submit-btn" id="admissionSubmitBtn">Save Admission Form</button>
@@ -131,6 +136,9 @@
 <script src="firebase-config.js"></script>
 <script>
 let currentUid = null;
+let currentRollNumber = '';
+let currentStartMonth = '';
+let hadPreviousSubmission = false;
 
 document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
 
@@ -199,23 +207,15 @@ heardPersonOpt.addEventListener('click', ()=>{ heardPerson.checked = true; updat
 const photoInput = document.getElementById('a_photo');
 const photoPreview = document.getElementById('photoPreview');
 const photoHint = document.getElementById('photoHint');
-let photoBase64 = '';
+let photoFile = null;
+
 photoInput.addEventListener('change', ()=>{
   const file = photoInput.files[0];
   if(!file) return;
-  if(file.size > 50 * 1024 * 1024){
-    document.querySelector('[data-field="photo"]').classList.add('invalid');
-    photoInput.value = '';
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = e=>{
-    photoBase64 = e.target.result;
-    photoPreview.src = photoBase64;
-    photoPreview.style.display = 'block';
-    photoHint.textContent = file.name;
-  };
-  reader.readAsDataURL(file);
+  photoFile = file;
+  photoPreview.src = URL.createObjectURL(file);
+  photoPreview.style.display = 'block';
+  photoHint.textContent = file.name;
   document.querySelector('[data-field="photo"]').classList.remove('invalid');
 });
 
@@ -224,6 +224,19 @@ function markInvalid(el){ el.classList.add('invalid'); }
 function isValidPhone(v){ return /^[0-9+\-\s]{7,15}$/.test(v.trim()); }
 function val(id){ return document.getElementById(id).value.trim(); }
 function setVal(id, v){ document.getElementById(id).value = v || ''; }
+function monthKeyToLabel(key){
+  if(!key) return '';
+  const d = new Date(key + '-01');
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 auth.onAuthStateChanged(async (user)=>{
   if(!user){ window.location.href = 'login.html'; return; }
@@ -237,6 +250,9 @@ auth.onAuthStateChanged(async (user)=>{
     return;
   }
   const s = doc.data();
+  currentRollNumber = s.rollNumber || '';
+  currentStartMonth = s.startMonth || '';
+  hadPreviousSubmission = !!s.admissionSubmitted;
 
   if(s.role === 'student'){ roleStudent.checked = true; }
   else if(s.role === 'worker'){ roleWorker.checked = true; }
@@ -265,12 +281,13 @@ auth.onAuthStateChanged(async (user)=>{
   else if(s.heard === 'Person'){ heardPerson.checked = true; }
   updateHeardUI();
   setVal('a_personname', s.personname); setVal('a_personmobile', s.personmobile);
-  setVal('a_startdate', s.startdate); setVal('a_duration', s.duration);
-  if(s.photoBase64){
-    photoBase64 = s.photoBase64;
-    photoPreview.src = photoBase64;
-    photoPreview.style.display = 'block';
-    photoHint.textContent = 'Current photo on file (click to replace)';
+
+  setVal('a_startmonth', s.startMonth ? monthKeyToLabel(s.startMonth) : 'Not set yet — contact the admin');
+  setVal('a_duration', s.duration);
+
+  if(hadPreviousSubmission){
+    photoHint.textContent = 'A photo was already saved to the Google Sheet — pick a new one only if you want to replace it';
+    document.querySelector('[data-field="photo"] .err').textContent = 'If uploading, please choose a valid photo.';
   }
 
   if(s.admissionApproved){
@@ -350,11 +367,10 @@ document.getElementById('admissionForm').addEventListener('submit', async functi
     personmobile = requirePhone('a_personmobile','personmobile');
   }
 
-  const startdate = requireText('a_startdate','startdate');
   const duration = requireText('a_duration','duration');
 
   const photoField = form.querySelector('[data-field="photo"]');
-  if(!photoBase64){ markInvalid(photoField); valid = false; } else { markValid(photoField); }
+  if(!hadPreviousSubmission && !photoFile){ markInvalid(photoField); valid = false; } else { markValid(photoField); }
 
   if(!valid){
     statusMsg.textContent = 'Please fill in the highlighted fields.';
@@ -364,9 +380,12 @@ document.getElementById('admissionForm').addEventListener('submit', async functi
   }
 
   const btn = document.getElementById('admissionSubmitBtn');
-  btn.disabled = true; btn.textContent = 'Saving...';
+  btn.disabled = true;
 
   try{
+    btn.textContent = 'Saving...';
+
+    // Save everything except the photo to Firestore — shown in the admin panel.
     await db.collection('students').doc(currentUid).update({
       role, fullname, nickname, phone, whatsapp,
       college, collegecourse, courseyear,
@@ -375,15 +394,45 @@ document.getElementById('admissionForm').addEventListener('submit', async functi
       mother, motherstatus, mothermobile,
       siblingname, siblingmobile, husbandname, husbandmobile,
       address, heard, personname, personmobile,
-      startdate, duration, photoBase64,
+      duration,
       admissionSubmitted: true,
       admissionSubmittedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // Send everything, including the photo, to the Google Sheet.
+    if(ADMISSION_SHEET_SCRIPT_URL && ADMISSION_SHEET_SCRIPT_URL.indexOf('PASTE_YOUR') !== 0){
+      let photoBase64 = '';
+      if(photoFile){
+        btn.textContent = 'Uploading photo...';
+        photoBase64 = await fileToBase64(photoFile);
+      }
+      await fetch(ADMISSION_SHEET_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          formType: 'admission',
+          rollNumber: currentRollNumber,
+          role, fullname, nickname, phone, whatsapp,
+          college, collegecourse, courseyear,
+          jobplace, jobplacemobile,
+          father, fatherstatus, fathermobile,
+          mother, motherstatus, mothermobile,
+          siblingname, siblingmobile, husbandname, husbandmobile,
+          address, heard, personname, personmobile,
+          startMonthLabel: monthKeyToLabel(currentStartMonth),
+          duration, photoBase64
+        })
+      });
+    }
+
+    hadPreviousSubmission = true;
+    photoFile = null;
     statusMsg.textContent = 'Saved successfully.';
     statusMsg.className = 'status ok';
     statusMsg.style.display = 'block';
   }catch(err){
-    statusMsg.textContent = 'Something went wrong saving your form. Please try again.';
+    statusMsg.textContent = 'Something went wrong saving your form: ' + (err.message || err.code || 'unknown error');
     statusMsg.className = 'status error';
     statusMsg.style.display = 'block';
   }
