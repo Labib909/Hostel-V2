@@ -14,7 +14,7 @@ const db = firebase.firestore();
 
 // Google Apps Script Web App URL that saves admission form submissions
 // (including the photo) into a Google Sheet + Drive folder. See SETUP-SHEETS.md.
-const ADMISSION_SHEET_SCRIPT_URL = "PASTE_YOUR_ADMISSION_SCRIPT_URL_HERE";
+const ADMISSION_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfyanXXk4NP_OaiAoh_tNTcm2LmHLvLm9kvpH9vKWLwoOmuip9TXTkpA9BgB6YJ4LxWg/exec";
 // Optional: paste your Google Sheet's normal share URL here to get a
 // quick "Open Photos Sheet" button in the admin panel. Leave blank to skip.
 const ADMISSION_SHEET_VIEW_URL = "";
