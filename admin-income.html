@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Income Details</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-payment-history.html">Payment History</a>
+    <a href="admin-student-info.html">Student Info</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-spending.html">Spending</a>
+    <a href="admin-spending-history.html">Spending History</a>
+    <a href="admin-income.html" class="active">Income Details</a>
+    <a href="admin-income-history.html">Income History</a>
+    <a href="admin-profit-chart.html">Profit Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Investment</h2>
+    <p class="sub">Money put into the business — as many entries as you need.</p>
+    <div class="row-2">
+      <div class="field"><label>Date</label><input type="date" id="investDate"></div>
+      <div class="field"><label>Amount (&#2547;)</label><input type="number" id="investAmount" min="1"></div>
+    </div>
+    <div class="field"><label>Note</label><input type="text" id="investNote" placeholder="What was this investment for?"></div>
+    <button class="submit-btn auto" id="addInvestBtn">Add Investment</button>
+    <div class="status" id="investStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>Other Income</h2>
+    <p class="sub">Any other money coming in that isn't from student fees.</p>
+    <div class="row-2">
+      <div class="field"><label>Date</label><input type="date" id="incomeDate"></div>
+      <div class="field"><label>Amount (&#2547;)</label><input type="number" id="incomeAmount" min="1"></div>
+    </div>
+    <div class="field"><label>Note</label><input type="text" id="incomeNote" placeholder="What was this income for?"></div>
+    <button class="submit-btn auto" id="addIncomeBtn">Add Income</button>
+    <div class="status" id="incomeStatus"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+function forMonthFromDate(dateStr){
+  return dateStr ? dateStr.slice(0,7) : '';
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('investDate').value = today;
+  document.getElementById('incomeDate').value = today;
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+
+document.getElementById('addInvestBtn').addEventListener('click', async ()=>{
+  const date = document.getElementById('investDate').value;
+  const amount = Number(document.getElementById('investAmount').value);
+  const note = document.getElementById('investNote').value.trim();
+  const statusMsg = document.getElementById('investStatus');
+
+  if(!date || !amount || amount <= 0){
+    statusMsg.textContent = 'Please choose a date and a valid amount.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  try{
+    await db.collection('income').add({
+      type: 'Investment', date, forMonth: forMonthFromDate(date), amount, note,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusMsg.textContent = 'Investment added.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    document.getElementById('investAmount').value = '';
+    document.getElementById('investNote').value = '';
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong adding this investment.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+});
+
+document.getElementById('addIncomeBtn').addEventListener('click', async ()=>{
+  const date = document.getElementById('incomeDate').value;
+  const amount = Number(document.getElementById('incomeAmount').value);
+  const note = document.getElementById('incomeNote').value.trim();
+  const statusMsg = document.getElementById('incomeStatus');
+
+  if(!date || !amount || amount <= 0){
+    statusMsg.textContent = 'Please choose a date and a valid amount.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  try{
+    await db.collection('income').add({
+      type: 'Other', date, forMonth: forMonthFromDate(date), amount, note,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusMsg.textContent = 'Income added.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    document.getElementById('incomeAmount').value = '';
+    document.getElementById('incomeNote').value = '';
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong adding this income.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>
