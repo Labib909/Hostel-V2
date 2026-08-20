@@ -82,6 +82,28 @@
     <div class="empty hidden" id="studentsEmpty">No students yet.</div>
   </div>
 
+  <div class="card">
+    <h2>Create Viewer Account (Read-Only)</h2>
+    <p class="sub">For anyone who should only see the reports — Profit Chart, Payment Chart, Spending History, Income History. They can't edit or add anything.</p>
+    <div class="row-2">
+      <div class="field"><label>Phone number</label><input type="tel" id="v_phone" placeholder="e.g. 01712345678"></div>
+      <div class="field"><label>Temporary password</label><input type="text" id="v_password" placeholder="At least 6 characters"></div>
+    </div>
+    <button type="submit" class="submit-btn auto" id="createViewerBtn">Create Viewer Account</button>
+    <div class="status" id="createViewerStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>Viewer Accounts</h2>
+    <div class="table-wrap">
+      <table id="viewersTable">
+        <thead><tr><th>Phone</th><th>Password</th></tr></thead>
+        <tbody id="viewersBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="viewersEmpty">No viewer accounts yet.</div>
+  </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -107,6 +129,7 @@ auth.onAuthStateChanged(async (user)=>{
 
   loadStudents();
   loadPaymentStats();
+  loadViewers();
 });
 
 function currentMonthKey(){
@@ -234,6 +257,79 @@ document.getElementById('createForm').addEventListener('submit', async (e)=>{
   }
 
   btn.disabled = false; btn.textContent = 'Create Account';
+});
+
+/* ---- Viewer accounts (read-only reporting access) ---- */
+async function loadViewers(){
+  const snap = await db.collection('viewers').get();
+  const body = document.getElementById('viewersBody');
+  const empty = document.getElementById('viewersEmpty');
+  body.innerHTML = '';
+
+  if(snap.empty){
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  snap.forEach(doc=>{
+    const v = doc.data();
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${v.phone || ''}</td><td class="mono">${v.passwordPlain || '—'}</td>`;
+    body.appendChild(row);
+  });
+}
+
+document.getElementById('createViewerBtn').addEventListener('click', async ()=>{
+  const statusMsg = document.getElementById('createViewerStatus');
+  statusMsg.style.display = 'none';
+
+  const phone = document.getElementById('v_phone').value.trim();
+  const password = document.getElementById('v_password').value;
+
+  if(!phone || !password || password.length < 6){
+    statusMsg.textContent = 'Please enter a valid phone number and a password of at least 6 characters.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('createViewerBtn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+
+  let secondaryApp;
+  try{
+    secondaryApp = firebase.apps.find(a => a.name === 'Secondary') || firebase.initializeApp(firebaseConfig, 'Secondary');
+    const secondaryAuth = secondaryApp.auth();
+
+    const authEmail = phoneToAuthEmail(phone);
+    const cred = await secondaryAuth.createUserWithEmailAndPassword(authEmail, password);
+    const newUid = cred.user.uid;
+
+    await db.collection('viewers').doc(newUid).set({
+      phone, passwordPlain: password,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await secondaryAuth.signOut();
+
+    statusMsg.textContent = 'Viewer account created. Share the phone number and password with them.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    document.getElementById('v_phone').value = '';
+    document.getElementById('v_password').value = '';
+    loadViewers();
+
+  }catch(err){
+    let msg = 'Could not create account.';
+    if(err.code === 'auth/email-already-in-use') msg = 'That phone number is already registered.';
+    if(err.code === 'auth/invalid-email') msg = 'That phone number looks invalid.';
+    if(err.code === 'auth/weak-password') msg = 'Password is too weak — use at least 6 characters.';
+    statusMsg.textContent = msg;
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+
+  btn.disabled = false; btn.textContent = 'Create Viewer Account';
 });
 </script>
 </body>
