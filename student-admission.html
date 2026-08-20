@@ -130,6 +130,15 @@
   </div>
 </div>
 
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="check-circle">&#10003;</div>
+    <h2>Thank you!</h2>
+    <p>Your admission form has been saved. The admin will review it and let you know once it's approved.</p>
+    <a class="submit-btn" href="student.html">Go to Home</a>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -428,9 +437,7 @@ document.getElementById('admissionForm').addEventListener('submit', async functi
 
     hadPreviousSubmission = true;
     photoFile = null;
-    statusMsg.textContent = 'Saved successfully.';
-    statusMsg.className = 'status ok';
-    statusMsg.style.display = 'block';
+    document.getElementById('successOverlay').classList.add('open');
   }catch(err){
     statusMsg.textContent = 'Something went wrong saving your form: ' + (err.message || err.code || 'unknown error');
     statusMsg.className = 'status error';
