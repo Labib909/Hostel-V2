@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Info</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-payment-history.html">Payment History</a>
+    <a href="admin-student-info.html" class="active">Student Info</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-spending.html">Spending</a>
+    <a href="admin-spending-history.html">Spending History</a>
+    <a href="admin-profit-chart.html">Profit Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Student Info</h2>
+    <div class="field" style="max-width:360px;">
+      <label>Select student</label>
+      <select id="studentSelect"></select>
+    </div>
+  </div>
+
+  <div class="hidden" id="detailSection">
+
+    <div class="card">
+      <div class="row-2">
+        <div class="field"><label>From month</label><input type="month" id="rangeStart"></div>
+        <div class="field"><label>To month</label><input type="month" id="rangeEnd"></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box gold"><div class="num" id="statAdmissionLeft">–</div><div class="label">Admission fee left</div></div>
+        <div class="stat-box gold"><div class="num" id="statMonthlyDue">–</div><div class="label">Monthly fee due (in range)</div></div>
+        <div class="stat-box"><div class="num" id="statTotalDue">–</div><div class="label">Total due</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Transaction History</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th>For Month</th><th>Amount</th><th>Method</th><th>Details</th><th>Status</th></tr></thead>
+          <tbody id="txBody"></tbody>
+        </table>
+      </div>
+      <div class="empty hidden" id="txEmpty">No transactions in this range.</div>
+    </div>
+
+    <div class="card">
+      <h2>Update Monthly Fee</h2>
+      <p class="sub">Change what this student pays each month, and from which month it takes effect.</p>
+      <div class="row-2">
+        <div class="field"><label>New monthly fee (&#2547;)</label><input type="number" id="newMonthlyFee" min="0"></div>
+        <div class="field"><label>Effective from</label><input type="month" id="newStartMonth"></div>
+      </div>
+      <button class="submit-btn auto" id="saveFeeBtn">Save</button>
+      <div class="status" id="feeStatus"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+let allStudents = [];
+let currentStudent = null;
+let currentPayments = [];
+
+function currentMonthKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function labelForMonthKey(key){
+  if(!key) return '—';
+  const d = new Date(key + '-01');
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+function addMonths(key, n){
+  const d = new Date(key + '-01');
+  d.setMonth(d.getMonth() + n);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const snap = await db.collection('students').get();
+  allStudents = [];
+  snap.forEach(doc=> allStudents.push({ uid: doc.id, ...doc.data() }));
+  allStudents.sort((a,b)=> (a.fullname||'').localeCompare(b.fullname||''));
+
+  const select = document.getElementById('studentSelect');
+  select.innerHTML = '<option value="">Select a student</option>' +
+    allStudents.map(s => `<option value="${s.uid}">${s.fullname || '(unnamed)'} ${s.rollNumber ? '— Roll ' + s.rollNumber : ''}</option>`).join('');
+  select.addEventListener('change', loadStudent);
+
+  document.getElementById('rangeStart').max = currentMonthKey();
+  document.getElementById('rangeEnd').max = currentMonthKey();
+  document.getElementById('rangeStart').addEventListener('change', renderDetail);
+  document.getElementById('rangeEnd').addEventListener('change', renderDetail);
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+
+async function loadStudent(){
+  const uid = document.getElementById('studentSelect').value;
+  if(!uid){
+    document.getElementById('detailSection').classList.add('hidden');
+    return;
+  }
+  currentStudent = allStudents.find(s=>s.uid === uid);
+
+  const snap = await db.collection('payments').where('studentUid','==',uid).get();
+  currentPayments = [];
+  snap.forEach(doc=> currentPayments.push({ id: doc.id, ...doc.data() }));
+
+  document.getElementById('rangeStart').value = currentStudent.startMonth || currentMonthKey();
+  document.getElementById('rangeEnd').value = currentMonthKey();
+
+  document.getElementById('newMonthlyFee').value = currentStudent.monthlyFee || '';
+  document.getElementById('newStartMonth').value = currentStudent.startMonth || '';
+
+  document.getElementById('detailSection').classList.remove('hidden');
+  renderDetail();
+}
+
+function renderDetail(){
+  if(!currentStudent) return;
+  const rangeStart = document.getElementById('rangeStart').value || currentStudent.startMonth || currentMonthKey();
+  const rangeEnd = document.getElementById('rangeEnd').value || currentMonthKey();
+
+  // Admission fee left (not scoped to date range — it's a one-time total)
+  const admissionPaid = currentPayments
+    .filter(p => p.paymentType === 'admission' && p.status === 'Received')
+    .reduce((sum,p)=> sum + (Number(p.amount)||0), 0);
+  const admissionFee = Number(currentStudent.admissionFee) || 0;
+  const admissionLeft = Math.max(admissionFee - admissionPaid, 0);
+
+  // Monthly fee due within the selected range
+  const receivedMonths = new Set(
+    currentPayments.filter(p => p.paymentType === 'monthly' && p.status === 'Received').map(p => p.forMonth)
+  );
+  let monthlyDue = 0;
+  let cursor = rangeStart;
+  let guard = 0;
+  while(cursor <= rangeEnd && guard < 240){
+    const applicable = currentStudent.startMonth && currentStudent.startMonth <= cursor;
+    if(applicable && !receivedMonths.has(cursor)){
+      monthlyDue += Number(currentStudent.monthlyFee) || 0;
+    }
+    cursor = addMonths(cursor, 1);
+    guard++;
+  }
+
+  document.getElementById('statAdmissionLeft').textContent = '৳' + admissionLeft;
+  document.getElementById('statMonthlyDue').textContent = '৳' + monthlyDue;
+  document.getElementById('statTotalDue').textContent = '৳' + (admissionLeft + monthlyDue);
+
+  // Transaction table — payments whose forMonth falls in range (admission fee's
+  // forMonth is fixed to the student's start month, so it naturally appears
+  // only when that month is in range).
+  const inRange = currentPayments.filter(p => p.forMonth >= rangeStart && p.forMonth <= rangeEnd);
+  inRange.sort((a,b)=>{
+    const ta = a.submittedAt && a.submittedAt.toDate ? a.submittedAt.toDate().getTime() : 0;
+    const tb = b.submittedAt && b.submittedAt.toDate ? b.submittedAt.toDate().getTime() : 0;
+    return tb - ta;
+  });
+
+  const body = document.getElementById('txBody');
+  const empty = document.getElementById('txEmpty');
+  body.innerHTML = '';
+
+  if(inRange.length === 0){
+    empty.classList.remove('hidden');
+  }else{
+    empty.classList.add('hidden');
+    inRange.forEach(p=>{
+      let dateLabel = '—';
+      if(p.submittedAt && p.submittedAt.toDate) dateLabel = p.submittedAt.toDate().toLocaleDateString();
+
+      let details = '—';
+      if(p.method === 'bKash'){
+        const parts = [];
+        if(p.txnId) parts.push('ID: ' + p.txnId);
+        if(p.txnPhone) parts.push('Ph: ' + p.txnPhone);
+        details = parts.join(' / ') || '—';
+      }else if(p.method === 'Person'){
+        details = 'Paid to ' + (p.personName || '—');
+      }
+
+      const typeLabel = p.paymentType === 'admission' ? 'Admission Fee' : 'Monthly Fee';
+      const pillClass = p.status === 'Received' ? 'pill-received' : 'pill-pending';
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${dateLabel}</td>
+        <td>${typeLabel}</td>
+        <td>${labelForMonthKey(p.forMonth)}</td>
+        <td>৳${p.amount}</td>
+        <td>${p.method}</td>
+        <td>${details}</td>
+        <td><span class="pill ${pillClass}">${p.status || 'Pending'}</span></td>
+      `;
+      body.appendChild(row);
+    });
+  }
+}
+
+document.getElementById('saveFeeBtn').addEventListener('click', async ()=>{
+  if(!currentStudent) return;
+  const statusMsg = document.getElementById('feeStatus');
+  const newFee = Number(document.getElementById('newMonthlyFee').value);
+  const newStart = document.getElementById('newStartMonth').value;
+
+  if(!newFee || newFee < 0 || !newStart){
+    statusMsg.textContent = 'Please enter a valid fee and start month.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+    return;
+  }
+
+  try{
+    await db.collection('students').doc(currentStudent.uid).update({
+      monthlyFee: newFee,
+      startMonth: newStart
+    });
+    currentStudent.monthlyFee = newFee;
+    currentStudent.startMonth = newStart;
+    statusMsg.textContent = 'Updated successfully.';
+    statusMsg.className = 'status ok';
+    statusMsg.style.display = 'block';
+    renderDetail();
+  }catch(err){
+    statusMsg.textContent = 'Something went wrong. Please try again.';
+    statusMsg.className = 'status error';
+    statusMsg.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

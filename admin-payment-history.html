@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment History</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Admin Panel</div>
+  <div class="nav">
+    <a href="admin.html">Overview</a>
+    <a href="admin-admissions.html">Student Admission</a>
+    <a href="admin-payments.html">Payment Details</a>
+    <a href="admin-payment-history.html" class="active">Payment History</a>
+    <a href="admin-student-info.html">Student Info</a>
+    <a href="admin-payment-chart.html">Payment Chart</a>
+    <a href="admin-spending.html">Spending</a>
+    <a href="admin-spending-history.html">Spending History</a>
+    <a href="admin-profit-chart.html">Profit Chart</a>
+    <a href="admin-problems.html">Problem Box</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+  <div class="card">
+    <h2>Payment History</h2>
+    <p class="sub">All accepted payments, most recent first.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Roll</th><th>Name</th><th>Type</th><th>For Month</th><th>Amount</th><th>Details</th><th></th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="historyEmpty">No accepted payments yet.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const adminDoc = await db.collection('admins').doc(user.uid).get();
+  if(!adminDoc.exists){
+    alert('This account is not an admin.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadHistory();
+});
+
+function labelForMonthKey(key){
+  if(!key) return '—';
+  const d = new Date(key + '-01');
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+
+async function loadHistory(){
+  const snap = await db.collection('payments').where('status','==','Received').get();
+  const rows = [];
+  snap.forEach(doc=> rows.push({ id: doc.id, ...doc.data() }));
+
+  rows.sort((a,b)=>{
+    const ta = a.submittedAt && a.submittedAt.toDate ? a.submittedAt.toDate().getTime() : 0;
+    const tb = b.submittedAt && b.submittedAt.toDate ? b.submittedAt.toDate().getTime() : 0;
+    return tb - ta;
+  });
+
+  const body = document.getElementById('historyBody');
+  const empty = document.getElementById('historyEmpty');
+  body.innerHTML = '';
+
+  if(rows.length === 0){
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  rows.forEach(p=>{
+    let dateLabel = '—';
+    if(p.submittedAt && p.submittedAt.toDate) dateLabel = p.submittedAt.toDate().toLocaleDateString();
+
+    let details = '—';
+    if(p.method === 'bKash'){
+      const parts = [];
+      if(p.txnId) parts.push('ID: ' + p.txnId);
+      if(p.txnPhone) parts.push('Ph: ' + p.txnPhone);
+      details = (parts.join(' / ') || '—') + ' (bKash)';
+    }else if(p.method === 'Person'){
+      details = 'Paid to ' + (p.personName || '—');
+    }
+
+    const typeLabel = p.paymentType === 'admission' ? 'Admission Fee' : 'Monthly Fee';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${dateLabel}</td>
+      <td>${p.rollNumber || '—'}</td>
+      <td>${p.studentName || '—'}</td>
+      <td>${typeLabel}</td>
+      <td>${labelForMonthKey(p.forMonth)}</td>
+      <td>৳${p.amount}</td>
+      <td>${details}</td>
+      <td><button class="small-btn danger" data-id="${p.id}">Undo / Delete</button></td>
+    `;
+    body.appendChild(row);
+  });
+
+  document.querySelectorAll('[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Remove this from payment history? This deletes the record entirely.')) return;
+      await db.collection('payments').doc(btn.getAttribute('data-id')).delete();
+      loadHistory();
+    });
+  });
+}
+</script>
+</body>
+</html>
