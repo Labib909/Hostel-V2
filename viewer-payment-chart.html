@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Chart</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Reports (View Only)</div>
+  <div class="nav">
+    <a href="viewer-profit-chart.html">Profit Chart</a>
+    <a href="viewer-payment-chart.html" class="active">Payment Chart</a>
+    <a href="viewer-spending-history.html">Spending History</a>
+    <a href="viewer-income-history.html">Income History</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Deposit</h2>
+    <p class="sub">Monthly fee paid, this month and the two before it. Totals at the top of each month.</p>
+    <div class="table-wrap">
+      <table class="chart-table" id="depositTable">
+        <thead>
+          <tr id="depositTotalRow"></tr>
+          <tr id="depositHeadRow"></tr>
+        </thead>
+        <tbody id="depositBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Debt</h2>
+    <p class="sub">Unpaid months show what's owed (their monthly fee). Paid months show a &#9679;.</p>
+    <div class="table-wrap">
+      <table class="chart-table" id="debtTable">
+        <thead>
+          <tr id="debtTotalRow"></tr>
+          <tr id="debtHeadRow"></tr>
+        </thead>
+        <tbody id="debtBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+function monthKeyOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function monthLabelOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.toLocaleString('en-US',{month:'short'}) + ' (' + d.getFullYear() + ')';
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const viewerDoc = await db.collection('viewers').doc(user.uid).get();
+  if(!viewerDoc.exists){
+    alert('This account does not have viewer access.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const studentsSnap = await db.collection('students').get();
+  const students = [];
+  studentsSnap.forEach(doc=> students.push({ uid: doc.id, ...doc.data() }));
+  students.sort((a,b)=> (a.rollNumber||'').localeCompare(b.rollNumber||''));
+
+  const paymentsSnap = await db.collection('payments')
+    .where('status','==','Received')
+    .where('paymentType','==','monthly')
+    .get();
+  const paidMap = {};
+  paymentsSnap.forEach(doc=>{
+    const p = doc.data();
+    const key = p.studentUid + '|' + p.forMonth;
+    paidMap[key] = (paidMap[key] || 0) + (Number(p.amount) || 0);
+  });
+
+  const admissionPaymentsSnap = await db.collection('payments')
+    .where('status','==','Received')
+    .where('paymentType','==','admission')
+    .get();
+  const admissionPaidMap = {};
+  admissionPaymentsSnap.forEach(doc=>{
+    const p = doc.data();
+    admissionPaidMap[p.studentUid] = (admissionPaidMap[p.studentUid] || 0) + (Number(p.amount) || 0);
+  });
+
+  const months = [-2,-1,0].map(offset => ({ key: monthKeyOffset(offset), label: monthLabelOffset(offset) }));
+
+  const depositHead = document.getElementById('depositHeadRow');
+  depositHead.innerHTML = '<th>Roll</th><th>Name</th><th>Admission Fee</th>' + months.map(m=>`<th>${m.label}</th>`).join('');
+  const debtHead = document.getElementById('debtHeadRow');
+  debtHead.innerHTML = '<th>Roll</th><th>Name</th><th>Admission Fee</th>' + months.map(m=>`<th>${m.label}</th>`).join('');
+
+  const depositBody = document.getElementById('depositBody');
+  const debtBody = document.getElementById('debtBody');
+  depositBody.innerHTML = '';
+  debtBody.innerHTML = '';
+
+  const monthTotalsDeposit = months.map(()=>0);
+  const monthTotalsDebt = months.map(()=>0);
+
+  students.forEach(s=>{
+    const admissionFee = Number(s.admissionFee) || 0;
+    const admissionPaid = admissionPaidMap[s.uid] || 0;
+    const admissionFullyPaid = admissionFee > 0 && admissionPaid >= admissionFee;
+    const admissionRemaining = Math.max(admissionFee - admissionPaid, 0);
+
+    const admissionDepositCell = admissionFullyPaid
+      ? `<td>৳${admissionPaid}</td>`
+      : `<td><span class="dash">-</span></td>`;
+    const admissionDebtCell = admissionFullyPaid
+      ? `<td><span class="dash">-</span></td>`
+      : `<td>৳${admissionRemaining}</td>`;
+
+    let depositCells = `<td>${s.rollNumber || '—'}</td><td>${s.fullname || '(unnamed)'}</td>` + admissionDepositCell;
+    let debtCells = `<td>${s.rollNumber || '—'}</td><td>${s.fullname || '(unnamed)'}</td>` + admissionDebtCell;
+
+    months.forEach((m, i)=>{
+      const applicable = s.startMonth && s.startMonth <= m.key;
+      const paidAmount = paidMap[s.uid + '|' + m.key] || 0;
+
+      if(!applicable){
+        depositCells += `<td><span class="dash">–</span></td>`;
+        debtCells += `<td><span class="dash">–</span></td>`;
+        return;
+      }
+
+      if(paidAmount > 0){
+        depositCells += `<td>৳${paidAmount}</td>`;
+        debtCells += `<td><span class="dot-paid">&#9679;</span></td>`;
+        monthTotalsDeposit[i] += paidAmount;
+      }else{
+        depositCells += `<td><span class="dash">-</span></td>`;
+        const owed = Number(s.monthlyFee) || 0;
+        debtCells += `<td>৳${owed}</td>`;
+        monthTotalsDebt[i] += owed;
+      }
+    });
+
+    const depositRow = document.createElement('tr');
+    depositRow.innerHTML = depositCells;
+    depositBody.appendChild(depositRow);
+
+    const debtRow = document.createElement('tr');
+    debtRow.innerHTML = debtCells;
+    debtBody.appendChild(debtRow);
+  });
+
+  document.getElementById('depositTotalRow').innerHTML =
+    '<th></th><th></th><th>Total</th>' + monthTotalsDeposit.map(t=>`<th>৳${t}</th>`).join('');
+  document.getElementById('debtTotalRow').innerHTML =
+    '<th></th><th></th><th>Total</th>' + monthTotalsDebt.map(t=>`<th>৳${t}</th>`).join('');
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+</script>
+</body>
+</html>

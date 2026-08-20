@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profit Chart</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Reports (View Only)</div>
+  <div class="nav">
+    <a href="viewer-profit-chart.html" class="active">Profit Chart</a>
+    <a href="viewer-payment-chart.html">Payment Chart</a>
+    <a href="viewer-spending-history.html">Spending History</a>
+    <a href="viewer-income-history.html">Income History</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page wide hidden" id="mainContent">
+  <div class="card">
+    <h2>Profit Chart</h2>
+    <p class="sub">
+      Target = what we'd earn if every student paid in full (monthly fees + admission fees due that month).
+      Receive = what's actually been confirmed. Due = the gap. Profit = Receive minus Rent.
+    </p>
+    <div class="table-wrap">
+      <table class="chart-table" id="profitTable">
+        <thead>
+          <tr><th>Month</th><th>Target</th><th>Receive</th><th>Due</th><th>Rent</th><th>Profit</th></tr>
+        </thead>
+        <tbody id="profitBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Net Profit Chart</h2>
+    <p class="sub">
+      Student Income = admission fee + monthly fee received. Total Income = Student Income + Investment + Other Income.
+      Net Profit = Total Income minus Rent and Other Expenses.
+    </p>
+    <div class="table-wrap">
+      <table class="chart-table" id="netProfitTable">
+        <thead>
+          <tr><th>Month</th><th>Student Income</th><th>Investment</th><th>Other Income</th><th>Total Income</th><th>Rent</th><th>Other Expenses</th><th>Net Profit</th></tr>
+        </thead>
+        <tbody id="netProfitBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+function monthKeyOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function monthLabelOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.toLocaleString('en-US',{month:'long', year:'numeric'});
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const viewerDoc = await db.collection('viewers').doc(user.uid).get();
+  if(!viewerDoc.exists){
+    alert('This account does not have viewer access.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const [studentsSnap, paymentsSnap, expensesSnap, incomeSnap] = await Promise.all([
+    db.collection('students').get(),
+    db.collection('payments').where('status','==','Received').get(),
+    db.collection('expenses').get(),
+    db.collection('income').get()
+  ]);
+
+  const students = [];
+  studentsSnap.forEach(doc=> students.push(doc.data()));
+
+  const payments = [];
+  paymentsSnap.forEach(doc=> payments.push(doc.data()));
+
+  const expenses = [];
+  expensesSnap.forEach(doc=> expenses.push({ id: doc.id, ...doc.data() }));
+
+  const income = [];
+  incomeSnap.forEach(doc=> income.push({ id: doc.id, ...doc.data() }));
+
+  const months = [-2,-1,0].map(offset => ({ key: monthKeyOffset(offset), label: monthLabelOffset(offset) }));
+
+  const profitBody = document.getElementById('profitBody');
+  const netProfitBody = document.getElementById('netProfitBody');
+  profitBody.innerHTML = '';
+  netProfitBody.innerHTML = '';
+
+  months.forEach(m=>{
+    let target = 0;
+    students.forEach(s=>{
+      if(s.startMonth && s.startMonth <= m.key){
+        target += Number(s.monthlyFee) || 0;
+      }
+      if(s.startMonth === m.key){
+        target += Number(s.admissionFee) || 0;
+      }
+    });
+
+    const studentIncome = payments
+      .filter(p => p.forMonth === m.key)
+      .reduce((sum,p)=> sum + (Number(p.amount) || 0), 0);
+
+    const due = target - studentIncome;
+
+    const rentEntry = expenses.find(e => e.type === 'Rent' && e.forMonth === m.key);
+    const rent = rentEntry ? (Number(rentEntry.amount) || 0) : 0;
+
+    const profit = studentIncome - rent;
+
+    const otherExpenses = expenses
+      .filter(e => e.type === 'Other' && e.forMonth === m.key)
+      .reduce((sum,e)=> sum + (Number(e.amount) || 0), 0);
+
+    const investment = income
+      .filter(i => i.type === 'Investment' && i.forMonth === m.key)
+      .reduce((sum,i)=> sum + (Number(i.amount) || 0), 0);
+
+    const otherIncome = income
+      .filter(i => i.type === 'Other' && i.forMonth === m.key)
+      .reduce((sum,i)=> sum + (Number(i.amount) || 0), 0);
+
+    const totalIncome = studentIncome + investment + otherIncome;
+    const netProfit = totalIncome - rent - otherExpenses;
+
+    const profitRow = document.createElement('tr');
+    profitRow.innerHTML = `
+      <td>${m.label}</td>
+      <td>৳${target}</td>
+      <td>৳${studentIncome}</td>
+      <td>৳${due}</td>
+      <td>৳${rent}</td>
+      <td>৳${profit}</td>
+    `;
+    profitBody.appendChild(profitRow);
+
+    const netRow = document.createElement('tr');
+    netRow.innerHTML = `
+      <td>${m.label}</td>
+      <td>৳${studentIncome}</td>
+      <td>৳${investment}</td>
+      <td>৳${otherIncome}</td>
+      <td>৳${totalIncome}</td>
+      <td>৳${rent}</td>
+      <td>৳${otherExpenses}</td>
+      <td><strong>৳${netProfit}</strong></td>
+    `;
+    netProfitBody.appendChild(netRow);
+  });
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+});
+</script>
+</body>
+</html>

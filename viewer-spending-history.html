@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spending History</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Reports (View Only)</div>
+  <div class="nav">
+    <a href="viewer-profit-chart.html">Profit Chart</a>
+    <a href="viewer-payment-chart.html">Payment Chart</a>
+    <a href="viewer-spending-history.html" class="active">Spending History</a>
+    <a href="viewer-income-history.html">Income History</a>
+  </div>
+  <button class="logout-btn" id="logoutBtn">Log out</button>
+</div>
+
+<div id="loadingState" class="loading">Loading...</div>
+
+<div class="page hidden" id="mainContent">
+
+  <div class="card">
+    <h2>Spending History</h2>
+    <div class="field" style="max-width:320px;">
+      <label>Month</label>
+      <select id="monthSelect"></select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Rent</h2>
+    <div id="rentDisplay" class="sub">—</div>
+  </div>
+
+  <div class="card">
+    <h2>Other Expenses <span id="expenseCount" style="color:var(--muted); font-weight:400; font-size:14px;"></span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Amount</th><th>Note</th></tr></thead>
+        <tbody id="expenseBody"></tbody>
+      </table>
+    </div>
+    <div class="empty hidden" id="expenseEmpty">No other expenses logged for this month.</div>
+  </div>
+
+  <div class="card">
+    <h2>Total Spending This Month</h2>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" id="statRent">–</div><div class="label">Rent</div></div>
+      <div class="stat-box"><div class="num" id="statOther">–</div><div class="label">Other expenses</div></div>
+      <div class="stat-box teal"><div class="num" id="statTotal">–</div><div class="label">Total</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+
+function monthKeyOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function monthLabelOffset(offset){
+  const d = new Date(); d.setMonth(d.getMonth() + offset);
+  return d.toLocaleString('en-US',{month:'long', year:'numeric'});
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href = 'login.html'; return; }
+
+  const viewerDoc = await db.collection('viewers').doc(user.uid).get();
+  if(!viewerDoc.exists){
+    alert('This account does not have viewer access.');
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const select = document.getElementById('monthSelect');
+  let html = '';
+  for(let offset = -6; offset <= 0; offset++){
+    const key = monthKeyOffset(offset);
+    const label = monthLabelOffset(offset) + (offset === 0 ? ' (current)' : '');
+    html += `<option value="${key}" ${offset === 0 ? 'selected' : ''}>${label}</option>`;
+  }
+  select.innerHTML = html;
+  select.addEventListener('change', loadForMonth);
+
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadForMonth();
+});
+
+async function loadForMonth(){
+  const month = document.getElementById('monthSelect').value;
+
+  const rentDoc = await db.collection('expenses').doc('rent_' + month).get();
+  const rentAmount = rentDoc.exists ? (Number(rentDoc.data().amount) || 0) : 0;
+
+  document.getElementById('rentDisplay').textContent = rentDoc.exists
+    ? ('৳' + rentAmount)
+    : 'No rent logged for this month.';
+
+  const snap = await db.collection('expenses').where('type','==','Other').where('forMonth','==',month).get();
+  const entries = [];
+  snap.forEach(doc=> entries.push({ id: doc.id, ...doc.data() }));
+
+  const body = document.getElementById('expenseBody');
+  const empty = document.getElementById('expenseEmpty');
+  body.innerHTML = '';
+  let otherTotal = 0;
+
+  if(entries.length === 0){
+    empty.classList.remove('hidden');
+  }else{
+    empty.classList.add('hidden');
+    entries.forEach(e=>{
+      otherTotal += Number(e.amount) || 0;
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>৳${e.amount}</td><td>${e.note || '—'}</td>`;
+      body.appendChild(row);
+    });
+  }
+
+  document.getElementById('expenseCount').textContent = '(' + entries.length + ')';
+  document.getElementById('statRent').textContent = '৳' + rentAmount;
+  document.getElementById('statOther').textContent = '৳' + otherTotal;
+  document.getElementById('statTotal').textContent = '৳' + (rentAmount + otherTotal);
+}
+</script>
+</body>
+</html>
