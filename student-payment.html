@@ -47,10 +47,6 @@
 
       <!-- ADMISSION FEE -->
       <div id="admissionBlock" class="hidden">
-        <div class="field">
-          <label>Month</label>
-          <input type="text" id="p_admissionMonth" disabled>
-        </div>
         <div class="field" data-field="admissionAmount">
           <label>Amount (&#2547;)</label>
           <input type="number" id="p_admissionAmount" min="1">
@@ -95,6 +91,15 @@
       <button type="submit" class="submit-btn teal" id="paymentSubmitBtn">Submit Payment</button>
       <div class="status" id="paymentStatus"></div>
     </form>
+  </div>
+</div>
+
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="check-circle">&#10003;</div>
+    <h2>Thank you!</h2>
+    <p>Your payment has been submitted and will show as Pending until the admin confirms it.</p>
+    <a class="submit-btn teal" href="student.html">Go to Home</a>
   </div>
 </div>
 
@@ -153,8 +158,6 @@ auth.onAuthStateChanged(async (user)=>{
     <option value="${monthKey(2)}">${monthLabel(2)} (advance)</option>
   `;
   monthSelect.addEventListener('change', updateMonthlyAmount);
-
-  document.getElementById('p_admissionMonth').value = labelForMonthKey(currentStudentData.startMonth) || 'Not set — contact admin';
 
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
@@ -322,14 +325,7 @@ document.getElementById('paymentForm').addEventListener('submit', async function
       status: 'Pending',
       submittedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    statusMsg.textContent = 'Payment submitted — it will show as Pending until confirmed.';
-    statusMsg.className = 'status ok';
-    statusMsg.style.display = 'block';
-    document.getElementById('p_txnId').value = '';
-    document.getElementById('p_txnPhone').value = '';
-    document.getElementById('p_personName').value = '';
-    document.getElementById('p_admissionAmount').value = '';
-    document.querySelectorAll('#paymentForm .field').forEach(f=>f.classList.remove('invalid'));
+    document.getElementById('successOverlay').classList.add('open');
   }catch(err){
     statusMsg.textContent = 'Something went wrong. Please try again.';
     statusMsg.className = 'status error';
