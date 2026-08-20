@@ -13,7 +13,8 @@
     <a href="admin.html">Overview</a>
     <a href="admin-admissions.html">Student Admission</a>
     <a href="admin-payments.html">Payment Details</a>
-    <a href="admin-admission-fee.html">Admission Fee</a>
+    <a href="admin-payment-history.html">Payment History</a>
+    <a href="admin-student-info.html">Student Info</a>
     <a href="admin-payment-chart.html" class="active">Payment Chart</a>
     <a href="admin-spending.html">Spending</a>
     <a href="admin-spending-history.html">Spending History</a>
@@ -100,6 +101,16 @@ auth.onAuthStateChanged(async (user)=>{
     paidMap[key] = (paidMap[key] || 0) + (Number(p.amount) || 0);
   });
 
+  const admissionPaymentsSnap = await db.collection('payments')
+    .where('status','==','Received')
+    .where('paymentType','==','admission')
+    .get();
+  const admissionPaidMap = {}; // uid -> total received
+  admissionPaymentsSnap.forEach(doc=>{
+    const p = doc.data();
+    admissionPaidMap[p.studentUid] = (admissionPaidMap[p.studentUid] || 0) + (Number(p.amount) || 0);
+  });
+
   // 2 months back, 1 month back, current month
   const months = [-2,-1,0].map(offset => ({ key: monthKeyOffset(offset), label: monthLabelOffset(offset) }));
 
@@ -117,8 +128,20 @@ auth.onAuthStateChanged(async (user)=>{
   const monthTotalsDebt = months.map(()=>0);
 
   students.forEach(s=>{
-    let depositCells = `<td>${s.rollNumber || '—'}</td><td>${s.fullname || '(unnamed)'}</td><td>৳${s.admissionFee || 0}</td>`;
-    let debtCells = `<td>${s.rollNumber || '—'}</td><td>${s.fullname || '(unnamed)'}</td><td>৳${s.admissionFee || 0}</td>`;
+    const admissionFee = Number(s.admissionFee) || 0;
+    const admissionPaid = admissionPaidMap[s.uid] || 0;
+    const admissionFullyPaid = admissionFee > 0 && admissionPaid >= admissionFee;
+    const admissionRemaining = Math.max(admissionFee - admissionPaid, 0);
+
+    const admissionDepositCell = admissionFullyPaid
+      ? `<td>৳${admissionPaid}</td>`
+      : `<td><span class="dash">-</span></td>`;
+    const admissionDebtCell = admissionFullyPaid
+      ? `<td><span class="dash">-</span></td>`
+      : `<td>৳${admissionRemaining}</td>`;
+
+    let depositCells = `<td>${s.rollNumber || '—'}</td><td>${s.fullname || '(unnamed)'}</td>` + admissionDepositCell;
+    let debtCells = `<td>${s.rollNumber || '—'}</td><td>${s.fullname || '(unnamed)'}</td>` + admissionDebtCell;
 
     months.forEach((m, i)=>{
       const applicable = s.startMonth && s.startMonth <= m.key;
