@@ -152,3 +152,20 @@ th{ color:var(--muted); font-weight:600; font-size:11.5px; text-transform:upperc
   background:#E9EBF5; border:1px solid #C9CEE0; color:var(--ink-soft); font-size:13px;
   padding:12px 14px; border-radius:8px; margin-bottom:20px;
 }
+
+.success-overlay{
+  position:fixed; inset:0; background:rgba(22,34,59,0.55);
+  display:none; align-items:center; justify-content:center; padding:20px; z-index:50;
+}
+.success-overlay.open{ display:flex; }
+.success-box{
+  background:var(--card); border-radius:16px; padding:40px 32px; max-width:380px; width:100%;
+  text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+}
+.success-box .check-circle{
+  width:60px; height:60px; border-radius:50%; background:#E6F0EC; color:var(--teal);
+  display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:28px;
+}
+.success-box h2{ font-family:'Fraunces',serif; font-size:24px; margin:0 0 8px; }
+.success-box p{ color:var(--muted); font-size:13.5px; margin:0 0 24px; line-height:1.5; }
+.success-box .submit-btn{ text-decoration:none; display:inline-block; }
