@@ -4,41 +4,84 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="topbar">
-  <div class="brand">Admin Panel</div>
-  <div class="nav">
-    <a href="admin.html" class="active">Overview</a>
-    <a href="admin-admissions.html">Student Admission</a>
-    <a href="admin-payments.html">Payment Details</a>
-    <a href="admin-payment-history.html">Payment History</a>
-    <a href="admin-student-info.html">Student Info</a>
-    <a href="admin-payment-chart.html">Payment Chart</a>
-    <a href="admin-spending.html">Spending</a>
-    <a href="admin-spending-history.html">Spending History</a>
-    <a href="admin-income.html">Income Details</a>
-    <a href="admin-income-history.html">Income History</a>
-    <a href="admin-profit-chart.html">Profit Chart</a>
-    <a href="admin-problems.html">Problem Box</a>
+<div class="app-shell">
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><i class="fa-solid fa-hotel"></i> Admin Panel</div>
+  <nav class="sidebar-nav">
+    <a href="admin.html" class="nav-link active"><i class="fa-solid fa-gauge-high"></i><span>Overview</span></a>
+    <a href="admin-admissions.html" class="nav-link"><i class="fa-solid fa-user-graduate"></i><span>Student Admission</span></a>
+    <a href="admin-payments.html" class="nav-link"><i class="fa-solid fa-money-bill-transfer"></i><span>Payment Details</span></a>
+    <a href="admin-payment-history.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i><span>Payment History</span></a>
+    <a href="admin-student-info.html" class="nav-link"><i class="fa-solid fa-circle-info"></i><span>Student Info</span></a>
+    <a href="admin-payment-chart.html" class="nav-link"><i class="fa-solid fa-chart-column"></i><span>Payment Chart</span></a>
+    <a href="admin-spending.html" class="nav-link"><i class="fa-solid fa-house-chimney"></i><span>Spending</span></a>
+    <a href="admin-spending-history.html" class="nav-link"><i class="fa-solid fa-receipt"></i><span>Spending History</span></a>
+    <a href="admin-income.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i><span>Income Details</span></a>
+    <a href="admin-income-history.html" class="nav-link"><i class="fa-solid fa-file-invoice-dollar"></i><span>Income History</span></a>
+    <a href="admin-profit-chart.html" class="nav-link"><i class="fa-solid fa-chart-line"></i><span>Profit Chart</span></a>
+    <a href="admin-problems.html" class="nav-link"><i class="fa-solid fa-triangle-exclamation"></i><span>Problem Box</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-label">Logged in as</div>
+    <div class="sidebar-footer-role">Administrator</div>
   </div>
-  <button class="logout-btn" id="logoutBtn">Log out</button>
-</div>
+</aside>
+<div class="main-area">
+<nav class="topnav">
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
+  <div class="topnav-search">
+    <input type="text" placeholder="Search for..." id="dashboardSearch">
+    <button type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </div>
+  <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log out</button>
+</nav>
+<div class="content-area">
 
 <div id="loadingState" class="loading">Loading...</div>
 
 <div class="page wide hidden" id="mainContent">
 
-  <div class="card">
-    <h2>Overview</h2>
-    <div class="stat-grid">
-      <div class="stat-box"><div class="num" id="statTotalStudents">–</div><div class="label">Total student accounts</div></div>
-      <div class="stat-box"><div class="num" id="statAdmissionDone">–</div><div class="label">Admission forms completed</div></div>
-      <div class="stat-box teal"><div class="num" id="statPaidThisMonth">–</div><div class="label">Paid this month</div></div>
-      <div class="stat-box teal"><div class="num" id="statAmountThisMonth">–</div><div class="label">Collected this month</div></div>
-      <div class="stat-box gold"><div class="num" id="statAdvancePayers">–</div><div class="label">Students paid in advance</div></div>
-      <div class="stat-box gold"><div class="num" id="statAdvanceAmount">–</div><div class="label">Advance amount collected</div></div>
+<div class="dash-header"><h1>Dashboard</h1></div>
+  <div class="dash-breadcrumb">Overview</div>
+
+  <div class="stat-card-row">
+    <a class="stat-card card-primary" href="admin-admissions.html">
+      <div class="stat-title">Total Students</div>
+      <div class="stat-value" id="statTotalStudents">–</div>
+      <div class="stat-footer"><span>View Details</span><i class="fa-solid fa-circle-chevron-right"></i></div>
+    </a>
+    <a class="stat-card card-warning" href="admin-admissions.html">
+      <div class="stat-title">Admission Pending</div>
+      <div class="stat-value" id="statAdmissionPending">–</div>
+      <div class="stat-footer"><span>View Details</span><i class="fa-solid fa-circle-chevron-right"></i></div>
+    </a>
+    <a class="stat-card card-success" href="admin-payment-history.html">
+      <div class="stat-title">Paid This Month</div>
+      <div class="stat-value" id="statPaidThisMonth">–</div>
+      <div class="stat-footer"><span>View Details</span><i class="fa-solid fa-circle-chevron-right"></i></div>
+    </a>
+    <a class="stat-card card-danger" href="admin-payments.html">
+      <div class="stat-title">Awaiting Review</div>
+      <div class="stat-value" id="statPendingReview">–</div>
+      <div class="stat-footer"><span>View Details</span><i class="fa-solid fa-circle-chevron-right"></i></div>
+    </a>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><i class="fa-solid fa-chart-simple"></i> More Overview</div>
+    <div class="panel-body">
+      <div class="stat-grid">
+        <div class="stat-box"><div class="num" id="statAdmissionDone">–</div><div class="label">Admission forms completed</div></div>
+        <div class="stat-box teal"><div class="num" id="statAmountThisMonth">–</div><div class="label">Collected this month</div></div>
+        <div class="stat-box gold"><div class="num" id="statAdvancePayers">–</div><div class="label">Students paid in advance</div></div>
+        <div class="stat-box gold"><div class="num" id="statAdvanceAmount">–</div><div class="label">Advance amount collected</div></div>
+      </div>
     </div>
   </div>
 
@@ -69,13 +112,35 @@
   </div>
 
   <div class="card">
-    <h2>All Students</h2>
+    <h2><i class="fa-solid fa-table" style="color:var(--sb-primary); margin-right:6px;"></i>All Students</h2>
     <div class="warning-box">
       Phone numbers and passwords are shown here so you can share login details or help students who forget them. Keep this page private — anyone who sees it can log in as any student.
     </div>
+    <div class="datatable-controls">
+      <label class="entries-label">Show
+        <select id="entriesPerPage">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="0">All</option>
+        </select>
+      entries</label>
+      <label class="search-label">Search:
+        <input type="text" id="studentsSearch" placeholder="">
+      </label>
+    </div>
     <div class="table-wrap">
-      <table id="studentsTable">
-        <thead><tr><th>Name</th><th>Phone</th><th>Password</th><th>Roll</th><th>Flat/Room</th><th>Monthly Fee</th><th>Type</th><th>Admission</th></tr></thead>
+      <table id="studentsTable" class="datatable">
+        <thead><tr>
+          <th data-col="0">Name <span class="sort-arrows"></span></th>
+          <th data-col="1">Phone <span class="sort-arrows"></span></th>
+          <th data-col="2">Password <span class="sort-arrows"></span></th>
+          <th data-col="3">Roll <span class="sort-arrows"></span></th>
+          <th data-col="4">Flat/Room <span class="sort-arrows"></span></th>
+          <th data-col="5">Monthly Fee <span class="sort-arrows"></span></th>
+          <th data-col="6">Type <span class="sort-arrows"></span></th>
+          <th data-col="7">Admission <span class="sort-arrows"></span></th>
+        </tr></thead>
         <tbody id="studentsBody"></tbody>
       </table>
     </div>
@@ -106,10 +171,31 @@
 
 </div>
 
+
+</div><!-- content-area -->
+</div><!-- main-area -->
+</div><!-- app-shell -->
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script>
+const sidebarToggleBtn = document.getElementById('sidebarToggle');
+const sidebarEl = document.getElementById('sidebar');
+const sidebarBackdropEl = document.getElementById('sidebarBackdrop');
+if(sidebarToggleBtn){
+  sidebarToggleBtn.addEventListener('click', ()=>{
+    sidebarEl.classList.toggle('open');
+    sidebarBackdropEl.classList.toggle('open');
+  });
+  sidebarBackdropEl.addEventListener('click', ()=>{
+    sidebarEl.classList.remove('open');
+    sidebarBackdropEl.classList.remove('open');
+  });
+}
+</script>
+
 <script>
 document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
 
@@ -171,6 +257,9 @@ async function loadStudents(){
 
   document.getElementById('statTotalStudents').textContent = total;
   document.getElementById('statAdmissionDone').textContent = admissionDone;
+  document.getElementById('statAdmissionPending').textContent = total - admissionDone;
+  window.__allStudentsCache = window.__allStudentsCache || [];
+  if(typeof applyTableView === 'function') applyTableView();
 }
 
 async function loadPaymentStats(){
@@ -195,6 +284,9 @@ async function loadPaymentStats(){
   document.getElementById('statAmountThisMonth').textContent = '৳' + thisMonthTotal;
   document.getElementById('statAdvancePayers').textContent = advancePayerSet.size;
   document.getElementById('statAdvanceAmount').textContent = '৳' + advanceTotal;
+
+  const pendingCount = Array.from(snap.docs).filter(d => d.data().status === 'Pending').length;
+  document.getElementById('statPendingReview').textContent = pendingCount;
 }
 
 /* ---- Create student account (via secondary Firebase app, so admin stays logged in) ---- */
@@ -331,6 +423,74 @@ document.getElementById('createViewerBtn').addEventListener('click', async ()=>{
 
   btn.disabled = false; btn.textContent = 'Create Viewer Account';
 });
+
+/* ---- DataTable-style controls for the Students table (display-only layer, doesn't touch the underlying data logic above) ---- */
+function applyTableView(){
+  const searchInput = document.getElementById('studentsSearch');
+  const entriesSelect = document.getElementById('entriesPerPage');
+  if(!searchInput || !entriesSelect) return;
+  const searchVal = (searchInput.value || '').toLowerCase();
+  const limit = Number(entriesSelect.value) || 0;
+  const rows = Array.from(document.querySelectorAll('#studentsBody tr'));
+  let shown = 0;
+  rows.forEach(row=>{
+    const text = row.textContent.toLowerCase();
+    const matches = !searchVal || text.includes(searchVal);
+    const withinLimit = limit === 0 || shown < limit;
+    if(matches && withinLimit){
+      row.style.display = '';
+      shown++;
+    }else{
+      row.style.display = 'none';
+    }
+  });
+}
+
+function sortStudentsTable(colIndex, th){
+  const tbody = document.getElementById('studentsBody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const newDir = th.classList.contains('sorted-asc') ? 'desc' : 'asc';
+
+  rows.sort((a,b)=>{
+    const av = (a.children[colIndex] ? a.children[colIndex].textContent : '').trim();
+    const bv = (b.children[colIndex] ? b.children[colIndex].textContent : '').trim();
+    const an = parseFloat(av.replace(/[^0-9.-]/g,''));
+    const bn = parseFloat(bv.replace(/[^0-9.-]/g,''));
+    let cmp;
+    if(!isNaN(an) && !isNaN(bn) && /^[৳0-9.,\s-]+$/.test(av)){
+      cmp = an - bn;
+    }else{
+      cmp = av.localeCompare(bv);
+    }
+    return newDir === 'asc' ? cmp : -cmp;
+  });
+
+  rows.forEach(r=> tbody.appendChild(r));
+  document.querySelectorAll('#studentsTable thead th').forEach(h=> h.classList.remove('sorted-asc','sorted-desc'));
+  th.classList.add(newDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+  applyTableView();
+}
+
+document.querySelectorAll('#studentsTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=> sortStudentsTable(Number(th.getAttribute('data-col')), th));
+});
+
+const studentsSearchEl = document.getElementById('studentsSearch');
+const entriesPerPageEl = document.getElementById('entriesPerPage');
+if(studentsSearchEl) studentsSearchEl.addEventListener('input', applyTableView);
+if(entriesPerPageEl) entriesPerPageEl.addEventListener('change', applyTableView);
+
+// The top search bar in the navbar acts as a shortcut into the same table search.
+const dashboardSearchEl = document.getElementById('dashboardSearch');
+if(dashboardSearchEl){
+  dashboardSearchEl.addEventListener('input', ()=>{
+    if(studentsSearchEl){
+      studentsSearchEl.value = dashboardSearchEl.value;
+      applyTableView();
+      document.getElementById('studentsTable').scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+  });
+}
 </script>
 </body>
 </html>
