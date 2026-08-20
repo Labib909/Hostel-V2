@@ -4,27 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Admission</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="topbar">
-  <div class="brand">Admin Panel</div>
-  <div class="nav">
-    <a href="admin.html">Overview</a>
-    <a href="admin-admissions.html" class="active">Student Admission</a>
-    <a href="admin-payments.html">Payment Details</a>
-    <a href="admin-payment-history.html">Payment History</a>
-    <a href="admin-student-info.html">Student Info</a>
-    <a href="admin-payment-chart.html">Payment Chart</a>
-    <a href="admin-spending.html">Spending</a>
-    <a href="admin-spending-history.html">Spending History</a>
-    <a href="admin-income.html">Income Details</a>
-    <a href="admin-income-history.html">Income History</a>
-    <a href="admin-profit-chart.html">Profit Chart</a>
-    <a href="admin-problems.html">Problem Box</a>
+<div class="app-shell">
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><i class="fa-solid fa-hotel"></i> Admin Panel</div>
+  <nav class="sidebar-nav">
+    <a href="admin.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Overview</span></a>
+    <a href="admin-admissions.html" class="nav-link active"><i class="fa-solid fa-user-graduate"></i><span>Student Admission</span></a>
+    <a href="admin-payments.html" class="nav-link"><i class="fa-solid fa-money-bill-transfer"></i><span>Payment Details</span></a>
+    <a href="admin-payment-history.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i><span>Payment History</span></a>
+    <a href="admin-student-info.html" class="nav-link"><i class="fa-solid fa-circle-info"></i><span>Student Info</span></a>
+    <a href="admin-payment-chart.html" class="nav-link"><i class="fa-solid fa-chart-column"></i><span>Payment Chart</span></a>
+    <a href="admin-spending.html" class="nav-link"><i class="fa-solid fa-house-chimney"></i><span>Spending</span></a>
+    <a href="admin-spending-history.html" class="nav-link"><i class="fa-solid fa-receipt"></i><span>Spending History</span></a>
+    <a href="admin-income.html" class="nav-link"><i class="fa-solid fa-sack-dollar"></i><span>Income Details</span></a>
+    <a href="admin-income-history.html" class="nav-link"><i class="fa-solid fa-file-invoice-dollar"></i><span>Income History</span></a>
+    <a href="admin-profit-chart.html" class="nav-link"><i class="fa-solid fa-chart-line"></i><span>Profit Chart</span></a>
+    <a href="admin-problems.html" class="nav-link"><i class="fa-solid fa-triangle-exclamation"></i><span>Problem Box</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-label">Logged in as</div>
+    <div class="sidebar-footer-role">Administrator</div>
   </div>
-  <button class="logout-btn" id="logoutBtn">Log out</button>
-</div>
+</aside>
+<div class="main-area">
+<nav class="topnav">
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
+  <div class="topnav-search">
+    <input type="text" placeholder="Search for...">
+    <button type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </div>
+  <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log out</button>
+</nav>
+<div class="content-area">
 
 <div id="loadingState" class="loading">Loading...</div>
 
@@ -43,10 +60,31 @@
   </div>
 </div>
 
+
+</div><!-- content-area -->
+</div><!-- main-area -->
+</div><!-- app-shell -->
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script>
+const sidebarToggleBtn = document.getElementById('sidebarToggle');
+const sidebarEl = document.getElementById('sidebar');
+const sidebarBackdropEl = document.getElementById('sidebarBackdrop');
+if(sidebarToggleBtn){
+  sidebarToggleBtn.addEventListener('click', ()=>{
+    sidebarEl.classList.toggle('open');
+    sidebarBackdropEl.classList.toggle('open');
+  });
+  sidebarBackdropEl.addEventListener('click', ()=>{
+    sidebarEl.classList.remove('open');
+    sidebarBackdropEl.classList.remove('open');
+  });
+}
+</script>
+
 <script>
 document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
 
