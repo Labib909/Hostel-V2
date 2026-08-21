@@ -169,6 +169,14 @@ function labelForMonthKey(key){
   const d = new Date(key + '-01');
   return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 }
+function addMonthsToKey(key, n){
+  const d = new Date(key + '-01');
+  d.setMonth(d.getMonth() + n);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+// Students can pay for any month back to July (change the year below if needed
+// next year), or their own start month if that's earlier — whichever comes first.
+const EARLIEST_PAYMENT_MONTH = '2026-07';
 
 auth.onAuthStateChanged(async (user)=>{
   if(!user){ window.location.href = 'login.html'; return; }
@@ -193,11 +201,26 @@ auth.onAuthStateChanged(async (user)=>{
   }catch(err){ /* non-fatal */ }
 
   const monthSelect = document.getElementById('p_forMonth');
-  monthSelect.innerHTML = `
-    <option value="${monthKey(0)}">${monthLabel(0)} (this month)</option>
-    <option value="${monthKey(1)}">${monthLabel(1)} (advance)</option>
-    <option value="${monthKey(2)}">${monthLabel(2)} (advance)</option>
-  `;
+  let rangeStart = EARLIEST_PAYMENT_MONTH;
+  if(currentStudentData.startMonth && currentStudentData.startMonth < rangeStart){
+    rangeStart = currentStudentData.startMonth;
+  }
+  const thisMonth = monthKey(0);
+  const rangeEnd = monthKey(2);
+
+  let optionsHtml = '';
+  let cursor = rangeStart;
+  let guard = 0;
+  while(cursor <= rangeEnd && guard < 120){
+    let tag = ' (advance)';
+    if(cursor === thisMonth) tag = ' (this month)';
+    else if(cursor < thisMonth) tag = ' (past due)';
+    const selected = cursor === thisMonth ? ' selected' : '';
+    optionsHtml += `<option value="${cursor}"${selected}>${labelForMonthKey(cursor)}${tag}</option>`;
+    cursor = addMonthsToKey(cursor, 1);
+    guard++;
+  }
+  monthSelect.innerHTML = optionsHtml;
   monthSelect.addEventListener('change', updateMonthlyAmount);
 
   document.getElementById('loadingState').classList.add('hidden');
