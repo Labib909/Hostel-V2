@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Services — Your Hostel Name</title>
+<link rel="stylesheet" href="public.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container">
+    <a class="site-brand" href="index.html">Your Hostel Name</a>
+    <div class="site-links" id="siteLinks">
+      <a href="index.html">Home</a>
+      <a href="services.html" class="active">Services</a>
+      <a href="gallery.html">Gallery</a>
+    </div>
+    <div class="nav-actions">
+      <a class="call-pill" href="tel:+8801XXXXXXXXX"><i class="fa-solid fa-phone"></i> Call Us</a>
+      <a class="icon-btn" href="login.html" aria-label="Login" title="Login"><i class="fa-solid fa-user"></i></a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <span class="hero-eyebrow">Everything included</span>
+  <h1>Our Services</h1>
+</div>
+
+<div class="container">
+
+  <div class="service-row">
+    <div class="service-photo"><i class="fa-solid fa-bed"></i></div>
+    <div class="service-copy">
+      <span class="tag">Where you'll sleep</span>
+      <h2>Furnished Rooms</h2>
+      <p>Every room comes ready — bed, mattress, storage, and a fan or AC depending on the room you choose. No need to buy furniture or haul anything across the city. Just bring your bags and settle in.</p>
+    </div>
+  </div>
+  <div class="stitch-divider"></div>
+
+  <div class="service-row reverse">
+    <div class="service-photo"><i class="fa-solid fa-utensils"></i></div>
+    <div class="service-copy">
+      <span class="tag">What you'll eat</span>
+      <h2>Home-Cooked Meals</h2>
+      <p>Meals are cooked fresh on-site every day, not brought in from outside. We keep the menu simple and homely — the kind of food you'd actually want after a long day, not a canteen tray.</p>
+    </div>
+  </div>
+  <div class="stitch-divider flip"></div>
+
+  <div class="service-row">
+    <div class="service-photo"><i class="fa-solid fa-wifi"></i></div>
+    <div class="service-copy">
+      <span class="tag">Where you'll work</span>
+      <h2>WiFi &amp; Study Space</h2>
+      <p>A quiet common area with a reliable internet connection, so classes, assignments, and job applications don't have to wait for a signal.</p>
+    </div>
+  </div>
+  <div class="stitch-divider"></div>
+
+  <div class="service-row reverse">
+    <div class="service-photo"><i class="fa-solid fa-shirt"></i></div>
+    <div class="service-copy">
+      <span class="tag">One less thing to worry about</span>
+      <h2>Laundry Service</h2>
+      <p>Drop off your laundry and get it back clean and folded — one less errand competing for your time during a busy week.</p>
+    </div>
+  </div>
+  <div class="stitch-divider flip"></div>
+
+  <div class="service-row">
+    <div class="service-photo"><i class="fa-solid fa-shield-halved"></i></div>
+    <div class="service-copy">
+      <span class="tag">Peace of mind</span>
+      <h2>24/7 Security</h2>
+      <p>Someone is always on-site, day and night. For residents and their families, that means one less thing to worry about.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="container"><div class="stitch-divider"></div></div>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-panel">
+      <div>
+        <h2>Ready to move in?</h2>
+        <p>Give us a call or drop by — we're happy to show you a room and answer any questions.</p>
+        <div class="contact-actions">
+          <a class="btn btn-primary" href="tel:+8801XXXXXXXXX"><i class="fa-solid fa-phone"></i> Call Us</a>
+          <a class="btn btn-outline" style="border-color:#fff; color:#fff;" href="login.html">Login</a>
+        </div>
+      </div>
+      <div class="hero-art" style="aspect-ratio:1/1;">
+        <i class="fa-solid fa-house-chimney-window house-icon"></i>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="brand">Your Hostel Name</div>
+    <div class="links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="login.html">Login</a>
+    </div>
+    <div class="fine">&copy; 2026 Your Hostel Name. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('navToggle').addEventListener('click', ()=>{
+  document.getElementById('siteLinks').classList.toggle('open-mobile');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery — Your Hostel Name</title>
+<link rel="stylesheet" href="public.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container">
+    <a class="site-brand" href="index.html">Your Hostel Name</a>
+    <div class="site-links" id="siteLinks">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="gallery.html" class="active">Gallery</a>
+    </div>
+    <div class="nav-actions">
+      <a class="call-pill" href="tel:+8801XXXXXXXXX"><i class="fa-solid fa-phone"></i> Call Us</a>
+      <a class="icon-btn" href="login.html" aria-label="Login" title="Login"><i class="fa-solid fa-user"></i></a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <span class="hero-eyebrow">A peek inside</span>
+  <h1>Gallery</h1>
+</div>
+
+<section class="section" style="padding-top:20px;">
+  <div class="container">
+    <div class="gallery-grid" id="galleryGrid">
+      <img src="https://picsum.photos/seed/hostel1/500/380" alt="Hostel photo 1">
+      <img src="https://picsum.photos/seed/hostel2/500/380" alt="Hostel photo 2">
+      <img src="https://picsum.photos/seed/hostel3/500/380" alt="Hostel photo 3">
+      <img src="https://picsum.photos/seed/hostel4/500/380" alt="Hostel photo 4">
+      <img src="https://picsum.photos/seed/hostel5/500/380" alt="Hostel photo 5">
+      <img src="https://picsum.photos/seed/hostel6/500/380" alt="Hostel photo 6">
+      <img src="https://picsum.photos/seed/hostel7/500/380" alt="Hostel photo 7">
+      <img src="https://picsum.photos/seed/hostel8/500/380" alt="Hostel photo 8">
+      <img src="https://picsum.photos/seed/hostel9/500/380" alt="Hostel photo 9">
+      <img src="https://picsum.photos/seed/hostel10/500/380" alt="Hostel photo 10">
+      <img src="https://picsum.photos/seed/hostel11/500/380" alt="Hostel photo 11">
+      <img src="https://picsum.photos/seed/hostel12/500/380" alt="Hostel photo 12">
+    </div>
+  </div>
+</section>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="brand">Your Hostel Name</div>
+    <div class="links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="login.html">Login</a>
+    </div>
+    <div class="fine">&copy; 2026 Your Hostel Name. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('navToggle').addEventListener('click', ()=>{
+  document.getElementById('siteLinks').classList.toggle('open-mobile');
+});
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+document.querySelectorAll('#galleryGrid img').forEach(img=>{
+  img.addEventListener('click', ()=>{
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    lightbox.classList.add('open');
+  });
+});
+document.getElementById('lightboxClose').addEventListener('click', ()=> lightbox.classList.remove('open'));
+lightbox.addEventListener('click', (e)=>{ if(e.target === lightbox) lightbox.classList.remove('open'); });
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') lightbox.classList.remove('open'); });
+</script>
+</body>
+</html>

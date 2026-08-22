@@ -3,88 +3,158 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
-<link rel="stylesheet" href="style.css">
+<title>Your Hostel Name</title>
+<link rel="stylesheet" href="public.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-<div class="page">
-  <div class="card" style="margin-top:60px;">
-    <h1 style="text-align:center;">Login</h1>
-    <p class="sub" style="text-align:center;">For students and admin. Accounts are created by the admin.</p>
 
-    <form id="loginForm" novalidate>
-      <div class="field">
-        <label for="phone">Phone number</label>
-        <input type="tel" id="phone" placeholder="e.g. 01712345678" autocomplete="username">
-      </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input type="password" id="password" autocomplete="current-password">
-      </div>
-      <button type="submit" class="submit-btn" id="submitBtn">Log in</button>
-      <div class="status" id="statusMsg"></div>
-    </form>
-    <p style="text-align:center; margin-top:20px;"><a class="back" href="index.html">&larr; Back to home</a></p>
+<nav class="site-nav">
+  <div class="container">
+    <a class="site-brand" href="index.html">Your Hostel Name</a>
+    <div class="site-links" id="siteLinks">
+      <a href="index.html" class="active">Home</a>
+      <a href="services.html">Services</a>
+      <a href="gallery.html">Gallery</a>
+    </div>
+    <div class="nav-actions">
+      <a class="call-pill" href="tel:+8801XXXXXXXXX"><i class="fa-solid fa-phone"></i> Call Us</a>
+      <a class="icon-btn" href="login.html" aria-label="Login" title="Login"><i class="fa-solid fa-user"></i></a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
   </div>
-</div>
+</nav>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="hero-eyebrow">You're always welcome here</span>
+      <h1>A home away from home</h1>
+      <p>Comfortable, safe rooms and genuine care for students and working people — the kind of place where the people running it actually know your name.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="services.html">See Our Services</a>
+        <a class="btn btn-outline" href="gallery.html">View Gallery</a>
+      </div>
+    </div>
+    <div class="hero-art">
+      <i class="fa-solid fa-house-chimney house-icon"></i>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="stitch-divider"></div></div>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-eyebrow">What we offer</div>
+      <h2>Our Services</h2>
+      <p>Everything you need for a comfortable stay, handled with care.</p>
+    </div>
+    <div class="service-grid">
+      <a class="service-card" href="services.html">
+        <div class="thumb"><i class="fa-solid fa-bed"></i></div>
+        <div class="body"><h3>Furnished Rooms</h3><p>Clean, ready-to-move-in rooms with everything you need from day one.</p></div>
+      </a>
+      <a class="service-card" href="services.html">
+        <div class="thumb"><i class="fa-solid fa-utensils"></i></div>
+        <div class="body"><h3>Home-Cooked Meals</h3><p>Fresh meals made daily — no takeout, no shortcuts.</p></div>
+      </a>
+      <a class="service-card" href="services.html">
+        <div class="thumb"><i class="fa-solid fa-wifi"></i></div>
+        <div class="body"><h3>WiFi &amp; Study Space</h3><p>A quiet corner and a fast connection for when it's time to focus.</p></div>
+      </a>
+      <a class="service-card" href="services.html">
+        <div class="thumb"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="body"><h3>24/7 Security</h3><p>Someone's always around — you and your family can rest easy.</p></div>
+      </a>
+    </div>
+    <div class="section-link"><a href="services.html">See all services &rarr;</a></div>
+  </div>
+</section>
+
+<div class="container"><div class="stitch-divider flip"></div></div>
+
+<section class="section">
+  <div class="container about-wrap">
+    <div class="about-art"><i class="fa-solid fa-hands-holding-child"></i></div>
+    <div class="about-text">
+      <h2>Run like a home, not a hotel</h2>
+      <p>We started this hostel because we believe living away from your family shouldn't mean losing that sense of care. Every resident is someone we know personally — not a room number.</p>
+      <p>Whether you're a student focused on your studies or working your first job in a new city, we want this to feel like somewhere you actually want to come back to.</p>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="stitch-divider"></div></div>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-eyebrow">A peek inside</div>
+      <h2>Gallery</h2>
+      <p>A few glimpses of what life here looks like.</p>
+    </div>
+    <div class="gallery-preview">
+      <img class="g1" src="https://picsum.photos/seed/hostel1/600/600" alt="">
+      <img src="https://picsum.photos/seed/hostel2/300/300" alt="">
+      <img src="https://picsum.photos/seed/hostel3/300/300" alt="">
+      <img src="https://picsum.photos/seed/hostel4/300/300" alt="">
+      <img src="https://picsum.photos/seed/hostel5/300/300" alt="">
+    </div>
+    <div class="section-link"><a href="gallery.html">View full gallery &rarr;</a></div>
+  </div>
+</section>
+
+<div class="container"><div class="stitch-divider flip"></div></div>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-panel">
+      <div>
+        <h2>Come see it for yourself</h2>
+        <p>Happy to show you around any time — just call ahead or drop by.</p>
+        <div class="contact-row">
+          <a class="icon-btn" href="tel:+8801XXXXXXXXX" aria-label="Call"><i class="fa-solid fa-phone"></i></a>
+          <span>+880 1XXX-XXXXXX</span>
+        </div>
+        <div class="contact-row">
+          <a class="icon-btn" id="mapsLink" href="#" target="_blank" rel="noopener" aria-label="Open in Google Maps"><i class="fa-solid fa-location-dot"></i></a>
+          <span id="addressText">Your full address goes here, City, Bangladesh</span>
+        </div>
+        <div class="contact-actions">
+          <a class="btn btn-primary" href="tel:+8801XXXXXXXXX"><i class="fa-solid fa-phone"></i> Call Us</a>
+          <a class="btn btn-outline" style="border-color:#fff; color:#fff;" href="login.html">Login</a>
+        </div>
+      </div>
+      <div class="hero-art" style="aspect-ratio:1/1;">
+        <i class="fa-solid fa-map-location-dot house-icon" style="color:var(--marigold);"></i>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="brand">Your Hostel Name</div>
+    <div class="links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="login.html">Login</a>
+    </div>
+    <div class="fine">&copy; 2026 Your Hostel Name. All rights reserved.</div>
+  </div>
+</footer>
+
 <script>
-const statusMsg = document.getElementById('statusMsg');
-const submitBtn = document.getElementById('submitBtn');
+// EDIT ME: set your real address here — the Google Maps link below builds itself from this text.
+const HOSTEL_ADDRESS = "Your full address goes here, City, Bangladesh";
+document.getElementById('addressText').textContent = HOSTEL_ADDRESS;
+document.getElementById('mapsLink').href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(HOSTEL_ADDRESS);
 
-document.getElementById('loginForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  statusMsg.style.display = 'none';
-  const phone = document.getElementById('phone').value.trim();
-  const password = document.getElementById('password').value;
-
-  if(!phone || !password){
-    statusMsg.textContent = 'Please enter both phone number and password.';
-    statusMsg.className = 'status error';
-    statusMsg.style.display = 'block';
-    return;
-  }
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Logging in...';
-
-  try{
-    const authEmail = phoneToAuthEmail(phone);
-    const cred = await auth.signInWithEmailAndPassword(authEmail, password);
-    const uid = cred.user.uid;
-
-    const adminDoc = await db.collection('admins').doc(uid).get();
-    if(adminDoc.exists){
-      window.location.href = 'admin.html';
-      return;
-    }
-
-    const studentDoc = await db.collection('students').doc(uid).get();
-    if(studentDoc.exists){
-      window.location.href = 'student.html';
-      return;
-    }
-
-    statusMsg.textContent = 'Your account has no profile set up. Contact the admin.';
-    statusMsg.className = 'status error';
-    statusMsg.style.display = 'block';
-    await auth.signOut();
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Log in';
-
-  }catch(err){
-    let msg = 'Login failed. Please check your phone number and password.';
-    if(err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please wait a bit and try again.';
-    statusMsg.textContent = msg;
-    statusMsg.className = 'status error';
-    statusMsg.style.display = 'block';
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Log in';
-  }
+document.getElementById('navToggle').addEventListener('click', ()=>{
+  document.getElementById('siteLinks').classList.toggle('open-mobile');
 });
 </script>
 </body>
