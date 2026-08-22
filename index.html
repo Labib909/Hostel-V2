@@ -140,6 +140,30 @@
   </div>
 </section>
 
+<section class="section" id="installSection">
+  <div class="container">
+    <div class="contact-panel" style="grid-template-columns:1fr;">
+      <div style="text-align:center;">
+        <h2>Get the App</h2>
+        <p style="margin-left:auto; margin-right:auto;">Add this to your home screen for quick access to admissions, payments, and updates — no app store needed.</p>
+        <div class="contact-actions" style="justify-content:center;">
+          <button class="btn btn-primary" id="installBtn"><i class="fa-solid fa-mobile-screen-button"></i> Install App</button>
+        </div>
+        <div id="iosInstructions" class="hidden" style="max-width:420px; margin:20px auto 0; text-align:left; background:rgba(255,255,255,0.08); border-radius:10px; padding:16px 18px; font-size:13.5px; line-height:1.7; color:#e6ebe6;">
+          On iPhone/iPad, install via Safari's Share menu:
+          <ol style="margin:8px 0 0; padding-left:20px;">
+            <li>Tap the <strong>Share</strong> icon (square with an arrow) in Safari's toolbar</li>
+            <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+            <li>Tap <strong>"Add"</strong> in the top right</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="stitch-divider"></div></div>
+
 <footer class="site-footer">
   <div class="container">
     <div class="brand">Your Hostel Name</div>
@@ -161,6 +185,50 @@ document.getElementById('mapsLink').href = "https://www.google.com/maps/search/?
 
 document.getElementById('navToggle').addEventListener('click', ()=>{
   document.getElementById('siteLinks').classList.toggle('open-mobile');
+});
+
+/* ---- Install App button ---- */
+const installSection = document.getElementById('installSection');
+const installBtn = document.getElementById('installBtn');
+const iosInstructions = document.getElementById('iosInstructions');
+
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+if(isStandalone){
+  // Already installed and running as an app — no need to show this section.
+  installSection.style.display = 'none';
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+installBtn.addEventListener('click', async ()=>{
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if(choice.outcome === 'accepted'){
+      installSection.style.display = 'none';
+    }
+    deferredInstallPrompt = null;
+    return;
+  }
+
+  if(isIOS){
+    iosInstructions.classList.toggle('hidden');
+    return;
+  }
+
+  // Browser doesn't support install prompts and isn't iOS — fall back to instructions too.
+  iosInstructions.textContent = 'Open this page in Chrome or Edge, then use the browser menu and choose "Install app" or "Add to Home Screen".';
+  iosInstructions.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', ()=>{
+  installSection.style.display = 'none';
 });
 </script>
 <script>
