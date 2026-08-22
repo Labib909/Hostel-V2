@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2F6F63">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hostel Portal">
 <title>Login</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +18,9 @@
     <h1 style="text-align:center;">Login</h1>
     <p class="sub" style="text-align:center;">For students and admin. Accounts are created by the admin.</p>
 
-    <form id="loginForm" novalidate>
+    <div id="sessionCheck" class="status ok" style="display:block; text-align:center;">Checking for an existing session...</div>
+
+    <form id="loginForm" novalidate class="hidden">
       <div class="field">
         <label for="phone">Phone number</label>
         <input type="tel" id="phone" placeholder="e.g. 01712345678" autocomplete="username">
@@ -35,6 +43,44 @@
 <script>
 const statusMsg = document.getElementById('statusMsg');
 const submitBtn = document.getElementById('submitBtn');
+const loginForm = document.getElementById('loginForm');
+const sessionCheck = document.getElementById('sessionCheck');
+
+// Shared routing: figure out where a signed-in user belongs and send them there.
+async function routeSignedInUser(uid){
+  const adminDoc = await db.collection('admins').doc(uid).get();
+  if(adminDoc.exists){ window.location.href = 'admin.html'; return true; }
+
+  const studentDoc = await db.collection('students').doc(uid).get();
+  if(studentDoc.exists){ window.location.href = 'student.html'; return true; }
+
+  const viewerDoc = await db.collection('viewers').doc(uid).get();
+  if(viewerDoc.exists){ window.location.href = 'viewer-profit-chart.html'; return true; }
+
+  return false;
+}
+
+// If a session already exists (e.g. opening the installed app), skip straight
+// past the login form instead of making them log in again.
+let autoCheckDone = false;
+auth.onAuthStateChanged(async (user)=>{
+  if(autoCheckDone) return; // don't re-trigger after a manual login below
+  autoCheckDone = true;
+
+  if(!user){
+    sessionCheck.style.display = 'none';
+    loginForm.classList.remove('hidden');
+    return;
+  }
+
+  const routed = await routeSignedInUser(user.uid);
+  if(!routed){
+    // Signed in but no matching profile — fall back to the login form.
+    await auth.signOut();
+    sessionCheck.style.display = 'none';
+    loginForm.classList.remove('hidden');
+  }
+});
 
 document.getElementById('loginForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
@@ -55,32 +101,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
   try{
     const authEmail = phoneToAuthEmail(phone);
     const cred = await auth.signInWithEmailAndPassword(authEmail, password);
-    const uid = cred.user.uid;
+    const routed = await routeSignedInUser(cred.user.uid);
 
-    const adminDoc = await db.collection('admins').doc(uid).get();
-    if(adminDoc.exists){
-      window.location.href = 'admin.html';
-      return;
+    if(!routed){
+      statusMsg.textContent = 'Your account has no profile set up. Contact the admin.';
+      statusMsg.className = 'status error';
+      statusMsg.style.display = 'block';
+      await auth.signOut();
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log in';
     }
-
-    const studentDoc = await db.collection('students').doc(uid).get();
-    if(studentDoc.exists){
-      window.location.href = 'student.html';
-      return;
-    }
-
-    const viewerDoc = await db.collection('viewers').doc(uid).get();
-    if(viewerDoc.exists){
-      window.location.href = 'viewer-profit-chart.html';
-      return;
-    }
-
-    statusMsg.textContent = 'Your account has no profile set up. Contact the admin.';
-    statusMsg.className = 'status error';
-    statusMsg.style.display = 'block';
-    await auth.signOut();
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Log in';
 
   }catch(err){
     let msg = 'Login failed. Please check your phone number and password.';
@@ -92,6 +122,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
     submitBtn.textContent = 'Log in';
   }
 });
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
