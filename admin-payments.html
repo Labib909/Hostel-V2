@@ -114,7 +114,7 @@ auth.onAuthStateChanged(async (user)=>{
 function labelForMonthKey(key){
   if(!key) return '—';
   const d = new Date(key + '-01');
-  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 }
 
 async function loadPending(){

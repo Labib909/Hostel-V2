@@ -53,6 +53,7 @@
     <div class="table-wrap">
       <table class="chart-table" id="profitTable">
         <thead>
+          <tr id="profitTotalRow"></tr>
           <tr><th>Month</th><th>Target</th><th>Receive</th><th>Due</th><th>Rent</th><th>Profit</th></tr>
         </thead>
         <tbody id="profitBody"></tbody>
@@ -69,6 +70,7 @@
     <div class="table-wrap">
       <table class="chart-table" id="netProfitTable">
         <thead>
+          <tr id="netProfitTotalRow"></tr>
           <tr><th>Month</th><th>Student Income</th><th>Investment</th><th>Other Income</th><th>Total Income</th><th>Rent</th><th>Other Expenses</th><th>Net Profit</th></tr>
         </thead>
         <tbody id="netProfitBody"></tbody>
@@ -151,6 +153,8 @@ auth.onAuthStateChanged(async (user)=>{
   profitBody.innerHTML = '';
   netProfitBody.innerHTML = '';
 
+  const totals = { target:0, studentIncome:0, due:0, rent:0, profit:0, investment:0, otherIncome:0, totalIncome:0, otherExpenses:0, netProfit:0 };
+
   months.forEach(m=>{
     let target = 0;
     students.forEach(s=>{
@@ -168,8 +172,9 @@ auth.onAuthStateChanged(async (user)=>{
 
     const due = target - studentIncome;
 
-    const rentEntry = expenses.find(e => e.type === 'Rent' && e.forMonth === m.key);
-    const rent = rentEntry ? (Number(rentEntry.amount) || 0) : 0;
+    const rent = expenses
+      .filter(e => e.type === 'Rent' && e.forMonth === m.key)
+      .reduce((sum,e)=> sum + (Number(e.amount) || 0), 0);
 
     const profit = studentIncome - rent;
 
@@ -187,6 +192,11 @@ auth.onAuthStateChanged(async (user)=>{
 
     const totalIncome = studentIncome + investment + otherIncome;
     const netProfit = totalIncome - rent - otherExpenses;
+
+    totals.target += target; totals.studentIncome += studentIncome; totals.due += due;
+    totals.rent += rent; totals.profit += profit; totals.investment += investment;
+    totals.otherIncome += otherIncome; totals.totalIncome += totalIncome;
+    totals.otherExpenses += otherExpenses; totals.netProfit += netProfit;
 
     const profitRow = document.createElement('tr');
     profitRow.innerHTML = `
@@ -212,6 +222,11 @@ auth.onAuthStateChanged(async (user)=>{
     `;
     netProfitBody.appendChild(netRow);
   });
+
+  document.getElementById('profitTotalRow').innerHTML =
+    `<th>Total</th><th>৳${totals.target}</th><th>৳${totals.studentIncome}</th><th>৳${totals.due}</th><th>৳${totals.rent}</th><th>৳${totals.profit}</th>`;
+  document.getElementById('netProfitTotalRow').innerHTML =
+    `<th>Total</th><th>৳${totals.studentIncome}</th><th>৳${totals.investment}</th><th>৳${totals.otherIncome}</th><th>৳${totals.totalIncome}</th><th>৳${totals.rent}</th><th>৳${totals.otherExpenses}</th><th>৳${totals.netProfit}</th>`;
 
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');

@@ -189,7 +189,7 @@ function setVal(id, v){ document.getElementById(id).value = v || ''; }
 function monthKeyToLabel(key){
   if(!key) return '';
   const d = new Date(key + '-01');
-  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 }
 
 const roleStudent = document.getElementById('role_student');

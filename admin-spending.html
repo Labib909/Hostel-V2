@@ -55,20 +55,24 @@
 
   <div class="card">
     <h2>Rent</h2>
-    <p class="sub">One rent entry per month — entering a new amount for a month you've already logged will update it, not duplicate it.</p>
+    <p class="sub">Log a rent payment — add one per flat if you pay rent separately for multiple flats.</p>
     <div class="row-2">
-      <div class="field"><label>Month</label><input type="month" id="rentMonth"></div>
+      <div class="field"><label>Date</label><input type="date" id="rentDate"></div>
       <div class="field"><label>Amount (&#2547;)</label><input type="number" id="rentAmount" min="0"></div>
     </div>
-    <button class="submit-btn auto" id="saveRentBtn">Save Rent</button>
+    <div class="row-2">
+      <div class="field"><label>Voucher <span class="optional">(optional)</span></label><input type="text" id="rentVoucher" placeholder="Voucher / receipt number"></div>
+      <div class="field"><label>Flat number</label><input type="text" id="rentFlat" placeholder="e.g. 4B"></div>
+    </div>
+    <button class="submit-btn auto" id="addRentBtn">Add Rent</button>
     <div class="status" id="rentStatus"></div>
   </div>
 
   <div class="card">
     <h2>Other Expenses</h2>
-    <p class="sub">Log as many of these as you need per month, each with a note about what it was for.</p>
+    <p class="sub">Log as many of these as you need, each with a note about what it was for.</p>
     <div class="row-2">
-      <div class="field"><label>Month</label><input type="month" id="expenseMonth"></div>
+      <div class="field"><label>Date</label><input type="date" id="expenseDate"></div>
       <div class="field"><label>Amount (&#2547;)</label><input type="number" id="expenseAmount" min="1"></div>
     </div>
     <div class="field"><label>Note</label><input type="text" id="expenseNote" placeholder="What was this expense for?"></div>
@@ -117,37 +121,43 @@ auth.onAuthStateChanged(async (user)=>{
     return;
   }
 
-  const now = new Date();
-  const currentMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  document.getElementById('rentMonth').value = currentMonth;
-  document.getElementById('expenseMonth').value = currentMonth;
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('rentDate').value = today;
+  document.getElementById('expenseDate').value = today;
 
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
 });
 
-document.getElementById('saveRentBtn').addEventListener('click', async ()=>{
-  const month = document.getElementById('rentMonth').value;
+function forMonthFromDate(dateStr){
+  return dateStr ? dateStr.slice(0,7) : '';
+}
+
+document.getElementById('addRentBtn').addEventListener('click', async ()=>{
+  const date = document.getElementById('rentDate').value;
   const amount = Number(document.getElementById('rentAmount').value);
+  const voucher = document.getElementById('rentVoucher').value.trim();
+  const flat = document.getElementById('rentFlat').value.trim();
   const statusMsg = document.getElementById('rentStatus');
 
-  if(!month || !amount || amount < 0){
-    statusMsg.textContent = 'Please choose a month and a valid amount.';
+  if(!date || !amount || amount < 0){
+    statusMsg.textContent = 'Please choose a date and a valid amount.';
     statusMsg.className = 'status error';
     statusMsg.style.display = 'block';
     return;
   }
 
   try{
-    // Deterministic doc ID (rent_YYYY-MM) means saving again for the same
-    // month updates the existing entry instead of creating a duplicate.
-    await db.collection('expenses').doc('rent_' + month).set({
-      type: 'Rent', forMonth: month, amount,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    await db.collection('expenses').add({
+      type: 'Rent', date, forMonth: forMonthFromDate(date), amount, voucher, flat,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    statusMsg.textContent = 'Rent saved for ' + month + '.';
+    statusMsg.textContent = 'Rent added.';
     statusMsg.className = 'status ok';
     statusMsg.style.display = 'block';
+    document.getElementById('rentAmount').value = '';
+    document.getElementById('rentVoucher').value = '';
+    document.getElementById('rentFlat').value = '';
   }catch(err){
     statusMsg.textContent = 'Something went wrong saving rent.';
     statusMsg.className = 'status error';
@@ -156,13 +166,13 @@ document.getElementById('saveRentBtn').addEventListener('click', async ()=>{
 });
 
 document.getElementById('addExpenseBtn').addEventListener('click', async ()=>{
-  const month = document.getElementById('expenseMonth').value;
+  const date = document.getElementById('expenseDate').value;
   const amount = Number(document.getElementById('expenseAmount').value);
   const note = document.getElementById('expenseNote').value.trim();
   const statusMsg = document.getElementById('expenseStatus');
 
-  if(!month || !amount || amount <= 0){
-    statusMsg.textContent = 'Please choose a month and a valid amount.';
+  if(!date || !amount || amount <= 0){
+    statusMsg.textContent = 'Please choose a date and a valid amount.';
     statusMsg.className = 'status error';
     statusMsg.style.display = 'block';
     return;
@@ -170,7 +180,7 @@ document.getElementById('addExpenseBtn').addEventListener('click', async ()=>{
 
   try{
     await db.collection('expenses').add({
-      type: 'Other', forMonth: month, amount, note,
+      type: 'Other', date, forMonth: forMonthFromDate(date), amount, note,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     statusMsg.textContent = 'Expense added.';

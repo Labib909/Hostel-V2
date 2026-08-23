@@ -65,27 +65,28 @@
     <h2>Investment <span id="investCount" style="color:var(--muted); font-weight:400; font-size:14px;"></span></h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Date</th><th>Amount</th><th>Note</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Amount (Total: <span id="investHeaderTotal">৳0</span>)</th><th>Note</th><th></th></tr></thead>
         <tbody id="investBody"></tbody>
       </table>
     </div>
-    <div class="empty hidden" id="investEmpty">No investments logged for this month.</div>
+    <div class="empty hidden" id="investEmpty">No investments logged for this period.</div>
   </div>
 
   <div class="card">
     <h2>Other Income <span id="incomeCount" style="color:var(--muted); font-weight:400; font-size:14px;"></span></h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Date</th><th>Amount</th><th>Note</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Amount (Total: <span id="incomeHeaderTotal">৳0</span>)</th><th>Note</th><th></th></tr></thead>
         <tbody id="incomeBody"></tbody>
       </table>
     </div>
-    <div class="empty hidden" id="incomeEmpty">No other income logged for this month.</div>
+    <div class="empty hidden" id="incomeEmpty">No other income logged for this period.</div>
   </div>
 
   <div class="card">
-    <h2>Total Income This Month</h2>
+    <h2>Total Income</h2>
     <div class="stat-grid">
+      <div class="stat-box"><div class="num" id="statStudent">–</div><div class="label">From students</div></div>
       <div class="stat-box"><div class="num" id="statInvest">–</div><div class="label">Investment</div></div>
       <div class="stat-box"><div class="num" id="statOther">–</div><div class="label">Other income</div></div>
       <div class="stat-box teal"><div class="num" id="statTotal">–</div><div class="label">Total</div></div>
@@ -128,7 +129,7 @@ function monthKeyOffset(offset){
 }
 function monthLabelOffset(offset){
   const d = new Date(); d.setMonth(d.getMonth() + offset);
-  return d.toLocaleString('en-US',{month:'long', year:'numeric'});
+  return d.toLocaleString('en-US',{month:'short', year:'numeric'});
 }
 
 auth.onAuthStateChanged(async (user)=>{
@@ -143,7 +144,7 @@ auth.onAuthStateChanged(async (user)=>{
   }
 
   const select = document.getElementById('monthSelect');
-  let html = '';
+  let html = '<option value="all">All Time</option>';
   for(let offset = -6; offset <= 0; offset++){
     const key = monthKeyOffset(offset);
     const label = monthLabelOffset(offset) + (offset === 0 ? ' (current)' : '');
@@ -157,53 +158,67 @@ auth.onAuthStateChanged(async (user)=>{
   loadForMonth();
 });
 
+function renderTable(entries, bodyId, emptyId, countId, headerTotalId, collectionName){
+  entries.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  const body = document.getElementById(bodyId);
+  const empty = document.getElementById(emptyId);
+  body.innerHTML = '';
+  let total = 0;
+
+  if(entries.length === 0){
+    empty.classList.remove('hidden');
+  }else{
+    empty.classList.add('hidden');
+    entries.forEach(e=>{
+      total += Number(e.amount) || 0;
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${e.date || '—'}</td><td>৳${e.amount}</td><td>${e.note || '—'}</td><td><button class="small-btn danger" data-id="${e.id}">Delete</button></td>`;
+      body.appendChild(row);
+    });
+    body.querySelectorAll('[data-id]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('Delete this entry?')) return;
+        await db.collection(collectionName).doc(btn.getAttribute('data-id')).delete();
+        loadForMonth();
+      });
+    });
+  }
+  document.getElementById(countId).textContent = '(' + entries.length + ')';
+  document.getElementById(headerTotalId).textContent = '৳' + total;
+  return total;
+}
+
 async function loadForMonth(){
   const month = document.getElementById('monthSelect').value;
+  const isAllTime = month === 'all';
 
-  const snap = await db.collection('income').where('forMonth','==',month).get();
+  let incomeQuery = db.collection('income');
+  let paymentsQuery = db.collection('payments').where('status','==','Received');
+  if(!isAllTime){
+    incomeQuery = incomeQuery.where('forMonth','==',month);
+    paymentsQuery = paymentsQuery.where('forMonth','==',month);
+  }
+
+  const [incomeSnap, paymentsSnap] = await Promise.all([incomeQuery.get(), paymentsQuery.get()]);
+
   const investEntries = [];
   const otherEntries = [];
-  snap.forEach(doc=>{
+  incomeSnap.forEach(doc=>{
     const e = { id: doc.id, ...doc.data() };
     if(e.type === 'Investment') investEntries.push(e);
     else otherEntries.push(e);
   });
 
-  function renderTable(entries, bodyId, emptyId, countId){
-    entries.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
-    const body = document.getElementById(bodyId);
-    const empty = document.getElementById(emptyId);
-    body.innerHTML = '';
-    let total = 0;
+  let studentTotal = 0;
+  paymentsSnap.forEach(doc=>{ studentTotal += Number(doc.data().amount) || 0; });
 
-    if(entries.length === 0){
-      empty.classList.remove('hidden');
-    }else{
-      empty.classList.add('hidden');
-      entries.forEach(e=>{
-        total += Number(e.amount) || 0;
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${e.date || '—'}</td><td>৳${e.amount}</td><td>${e.note || '—'}</td><td><button class="small-btn danger" data-id="${e.id}">Delete</button></td>`;
-        body.appendChild(row);
-      });
-      body.querySelectorAll('[data-id]').forEach(btn=>{
-        btn.addEventListener('click', async ()=>{
-          if(!confirm('Delete this entry?')) return;
-          await db.collection('income').doc(btn.getAttribute('data-id')).delete();
-          loadForMonth();
-        });
-      });
-    }
-    document.getElementById(countId).textContent = '(' + entries.length + ')';
-    return total;
-  }
+  const investTotal = renderTable(investEntries, 'investBody', 'investEmpty', 'investCount', 'investHeaderTotal', 'income');
+  const otherTotal = renderTable(otherEntries, 'incomeBody', 'incomeEmpty', 'incomeCount', 'incomeHeaderTotal', 'income');
 
-  const investTotal = renderTable(investEntries, 'investBody', 'investEmpty', 'investCount');
-  const otherTotal = renderTable(otherEntries, 'incomeBody', 'incomeEmpty', 'incomeCount');
-
+  document.getElementById('statStudent').textContent = '৳' + studentTotal;
   document.getElementById('statInvest').textContent = '৳' + investTotal;
   document.getElementById('statOther').textContent = '৳' + otherTotal;
-  document.getElementById('statTotal').textContent = '৳' + (investTotal + otherTotal);
+  document.getElementById('statTotal').textContent = '৳' + (studentTotal + investTotal + otherTotal);
 }
 </script>
 <script>

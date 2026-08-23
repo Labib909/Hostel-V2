@@ -164,7 +164,7 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOu
 
 function monthLabel(offset){
   const d = new Date(); d.setMonth(d.getMonth() + offset);
-  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 }
 function monthKey(offset){
   const d = new Date(); d.setMonth(d.getMonth() + offset);
@@ -173,7 +173,7 @@ function monthKey(offset){
 function labelForMonthKey(key){
   if(!key) return '';
   const d = new Date(key + '-01');
-  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 }
 function addMonthsToKey(key, n){
   const d = new Date(key + '-01');
@@ -207,10 +207,9 @@ auth.onAuthStateChanged(async (user)=>{
   }catch(err){ /* non-fatal */ }
 
   const monthSelect = document.getElementById('p_forMonth');
-  let rangeStart = EARLIEST_PAYMENT_MONTH;
-  if(currentStudentData.startMonth && currentStudentData.startMonth < rangeStart){
-    rangeStart = currentStudentData.startMonth;
-  }
+  // Never let a student select a month before their own start month —
+  // e.g. someone who joined in Sep 2026 shouldn't see Jul/Aug 2026 as options.
+  let rangeStart = currentStudentData.startMonth || EARLIEST_PAYMENT_MONTH;
   const thisMonth = monthKey(0);
   const rangeEnd = monthKey(2);
 
