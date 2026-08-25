@@ -34,7 +34,6 @@
     <input type="text" placeholder="Search for...">
     <button type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
   </div>
-  <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log out</button>
 </nav>
 <div class="content-area">
 
@@ -160,7 +159,7 @@ let currentStudentData = null;
 let approvedMonthlyMonths = new Set();
 let admissionPaidSoFar = 0;
 
-document.getElementById('logoutBtn').addEventListener('click', ()=>{ auth.signOut().then(()=> window.location.href = 'login.html'); });
+// Logout now lives only on the student home page (student.html)
 
 function monthLabel(offset){
   const d = new Date(); d.setMonth(d.getMonth() + offset);
