@@ -43,13 +43,13 @@
   <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
 
   <div class="card">
-    <h2>Make a Payment</h2>
+    <h2>টাকা পরিশোধ এর ফরম</h2>
 
     <div class="field" data-field="feeType">
-      <label>What are you paying?</label>
+      <label></label>
       <div class="radio-group">
-        <label class="radio-pill" id="feeTypeMonthlyOpt"><input type="radio" name="feeType" value="monthly" id="feeType_monthly">Monthly Fee</label>
-        <label class="radio-pill" id="feeTypeAdmissionOpt"><input type="radio" name="feeType" value="admission" id="feeType_admission">Admission Fee</label>
+        <label class="radio-pill" id="feeTypeMonthlyOpt"><input type="radio" name="feeType" value="monthly" id="feeType_monthly">মাসিক ভাড়া</label>
+        <label class="radio-pill" id="feeTypeAdmissionOpt"><input type="radio" name="feeType" value="admission" id="feeType_admission">ভর্তি ফি</label>
       </div>
     </div>
 
@@ -61,11 +61,11 @@
       <!-- MONTHLY FEE -->
       <div id="monthlyBlock" class="hidden">
         <div class="field" data-field="forMonth">
-          <label>Which month is this payment for?</label>
+          <label>কোন মাসের টাকা জমা দিবেন সিলেক্ট করুন</label>
           <select id="p_forMonth"></select>
         </div>
         <div class="field">
-          <label>Amount (&#2547;)</label>
+          <label>মাসিক ভাড়ার পরিমান (&#2547;)</label>
           <input type="text" id="p_monthlyAmount" disabled>
         </div>
       </div>
@@ -73,45 +73,47 @@
       <!-- ADMISSION FEE -->
       <div id="admissionBlock" class="hidden">
         <div class="field" data-field="admissionAmount">
-          <label>Amount (&#2547;)</label>
+          <label>ভর্তি ফি এর টাকার পরিমান (&#2547;)</label>
           <input type="number" id="p_admissionAmount" min="1">
           <div class="err">Please enter a valid amount.</div>
         </div>
       </div>
 
       <div class="field" data-field="method">
-        <label>Payment method</label>
+        <label>কিভাবে টাকা পরিশোধ করবেন (সিলেক্ট করুন)</label>
         <div class="radio-group">
           <label class="radio-pill" id="methodBkashOpt"><input type="radio" name="method" value="bKash" id="method_bkash">bKash</label>
-          <label class="radio-pill" id="methodPersonOpt"><input type="radio" name="method" value="Person" id="method_person">Person</label>
+          <label class="radio-pill" id="methodPersonOpt"><input type="radio" name="method" value="Person" id="method_person">ব্যক্তির নিকট</label>
         </div>
         <div class="err">Please choose a payment method.</div>
       </div>
 
       <div id="bkashFields" class="hidden">
-        <p class="sub" style="margin:-6px 0 14px;">Fill in the transaction ID or the phone number used — at least one, both is fine too.</p>
+        <p class="sub" style="margin:-6px 0 14px;">বিকাশ নম্বর (Personal) <span onclick="navigator.clipboard.writeText('01303697434')">01303697434</span> </p>
+        <p class="sub" style="margin:-6px 0 14px">নিচের দুইটি অথবা যেকোনো একটি ঘর পূরণ করুন </p>
         <div class="field" data-field="txnId">
-          <label>Transaction ID <span class="optional">(fill this or the phone number below)</span></label>
+          <label>Transaction ID <span class="optional"></span></label>
           <input type="text" id="p_txnId">
         </div>
         <div class="field" data-field="txnPhone">
-          <label>Transaction phone number <span class="optional">(fill this or the ID above)</span></label>
+          <label>যে বিকাশ নাম্বার থেকে টাকা পাঠিয়েছেন(লিখুন) <span class="optional"></span></label>
           <input type="tel" id="p_txnPhone">
         </div>
         <div class="err" id="bkashErr" style="display:none; color:var(--error); font-size:12px; margin:-10px 0 16px;">Please fill in the transaction ID or the phone number.</div>
       </div>
 
-      <div id="personFields" class="hidden">
-        <div class="field" data-field="personName">
-          <label>Paid to</label>
-          <select id="p_personName">
-            <option value="">Select a person</option>
-            <option value="Mithila">Mithila</option>
-            <option value="Sudebi">Sudebi</option>
-          </select>
-          <div class="err">Please select who you paid.</div>
-        </div>
-      </div>
+
+  <div id="personFields" class="hidden">
+    <div class="field" data-field="personName"> 
+      <label>যে ব্যক্তির নিকট টাকা জমা দিয়েছেন (সিলেক্ট করুন) </label> <select id="p_personName"> 
+        <option value="">Select a person</option> 
+        <option value="Mithila">Mithila (Flat no.B)</option> 
+        <option value="Sudebi">Sudebi (Flat no.A)</option> 
+      </select> 
+      <div class="err">Please select who you paid.</div> 
+    </div> 
+  </div>
+</div>
 
       <button type="submit" class="submit-btn teal" id="paymentSubmitBtn">Submit Payment</button>
       <div class="status" id="paymentStatus"></div>
@@ -407,6 +409,20 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
+}
+</script>
+<script>
+function copyBkash() {
+  navigator.clipboard.writeText("01303697434");
+
+  const number = document.getElementById("bkashNumber");
+  const original = number.textContent;
+
+  number.textContent = "Copied!";
+
+  setTimeout(() => {
+    number.textContent = original;
+  }, 1000);
 }
 </script>
 </body>

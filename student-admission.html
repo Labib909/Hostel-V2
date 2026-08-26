@@ -43,79 +43,92 @@
   <p style="margin-bottom:20px;"><a class="back" href="student.html">&larr; Back</a></p>
 
   <div class="locked-banner hidden" id="lockedBanner">
-    Your admission form has been approved and can no longer be edited. Contact the admin if something needs to change.
+    আপনার ভর্তি আবেদনপত্রটি অনুমোদিত হয়েছে এবং এটি আর পরিবর্তন করা যাবে না। কোনো পরিবর্তনের প্রয়োজন হলে কতৃপক্ষের সাথে যোগাযোগ করুন।
   </div>
 
   <div class="card">
-    <h1>Admission Form</h1>
-    <p class="sub" id="formSub">Fill this in once — you can come back and update it any time before it's approved.</p>
+    <h1>ভর্তি ফরম</h1>
+    <p class="sub" id="formSub"></p>
 
     <form id="admissionForm" novalidate>
-      <div class="section-label first">I am a</div>
+      <div class="section-label first">আপনার পেশা (সিলেক্ট করুন)</div>
       <div class="field" data-field="role">
         <div class="role-toggle">
-          <label class="role-option" id="roleStudentOpt"><input type="radio" name="role" value="student" id="role_student">Student</label>
-          <label class="role-option" id="roleWorkerOpt"><input type="radio" name="role" value="worker" id="role_worker">Worker</label>
+          <label class="role-option" id="roleStudentOpt"><input type="radio" name="role" value="student" id="role_student">ছাত্রী</label>
+          <label class="role-option" id="roleWorkerOpt"><input type="radio" name="role" value="worker" id="role_worker">চাকরিজীবী</label>
         </div>
-        <div class="err">Please choose Student or Worker.</div>
+        <div class="err">Please choose ছাত্রী or চাকরিজীবী.</div>
       </div>
 
       <div class="section-label">Basic Info</div>
-      <div class="field" data-field="fullname"><label>Full name</label><input type="text" id="a_fullname"><div class="err">Please enter the full name.</div></div>
-      <div class="field" data-field="nickname"><label>Nick name</label><input type="text" id="a_nickname"><div class="err">Please enter a nick name.</div></div>
-      <div class="field" data-field="phone"><label>Phone number</label><input type="tel" id="a_phone"><div class="err">Please enter a valid phone number.</div></div>
-      <div class="field" data-field="whatsapp"><label>WhatsApp number</label><input type="tel" id="a_whatsapp"><div class="err">Please enter a valid WhatsApp number.</div></div>
+      <div class="field" data-field="fullname"><label>আবেদনকারীর পূর্ণ নাম (ইংরেজিতে লিখুন )</label><input type="text" id="a_fullname"><div class="err">Please enter the full name.</div></div>
+      <div class="field" data-field="nickname"><label>আবেদনকারীর ডাক নাম</label><input type="text" id="a_nickname"><div class="err">Please enter a nick name.</div></div>
+      <div class="field" data-field="phone"><label>আবেদনকারীর মোবাইল নম্বর</label><input type="tel" id="a_phone"><div class="err">Please enter a valid phone number.</div></div>
+      <div class="field" data-field="whatsapp"><label>আবেদনকারীর whatsapp নম্বর</label><input type="tel" id="a_whatsapp"><div class="err">Please enter a valid WhatsApp number.</div></div>
 
       <div id="studentFields" class="hidden">
         <div class="section-label">Academic Info</div>
-        <div class="field" data-field="college"><label>College name</label><input type="text" id="a_college"><div class="err">Please enter the college name.</div></div>
-        <div class="field" data-field="collegecourse"><label>College / course level</label>
-          <select id="a_collegecourse"><option value="">Select level</option><option value="SSC">SSC</option><option value="HSC">HSC</option><option value="Honors">Honors</option></select>
+        <div class="field" data-field="college"><label>যে প্রতিষ্ঠানে পড়া-লেখা করেছেন সেই প্রতিষ্ঠানের নাম</label><input type="text" id="a_college"><div class="err">Please enter the college name.</div></div>
+        <div class="field" data-field="collegecourse"><label>কিসে পড়েন </label>
+          <select id="a_collegecourse"><option value="">Select level</option>
+            <option value="SSC">SSC</option>
+            <option value="HSC">HSC</option>
+            <option value="Degree">Degree</option>
+            <option value="Honors">Honors</option>
+            <option value="Masters">Masters</option>
+            <option value="Nurshing">Nurshing</option>
+          </select>
           <div class="err">Please select a level.</div>
         </div>
-        <div class="field" data-field="courseyear"><label>Course year</label>
-          <select id="a_courseyear"><option value="">Select year</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="Complete">Complete</option></select>
+        <div class="field" data-field="courseyear"><label>কোন বর্ষে পড়েন</label>
+          <select id="a_courseyear"><option value="">Select year</option>
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+            <option value="Complete">Complete</option>
+          </select>
           <div class="err">Please select the course year.</div>
         </div>
       </div>
 
       <div id="workerFields" class="hidden">
         <div class="section-label">Job Info</div>
-        <div class="field" data-field="jobplace"><label>Job place name</label><input type="text" id="a_jobplace"><div class="err">Please enter the job place name.</div></div>
-        <div class="field" data-field="jobplacemobile"><label>Job place mobile number</label><input type="tel" id="a_jobplacemobile"><div class="err">Please enter a valid mobile number.</div></div>
+        <div class="field" data-field="jobplace"><label>যে প্রতিষ্ঠানে কর্মরত আছেন সেই প্রতিষ্ঠানের নাম</label><input type="text" id="a_jobplace"><div class="err">Please enter the job place name.</div></div>
+        <div class="field" data-field="jobplacemobile"><label>যে প্রতিষ্ঠানে কর্মরত আছেন সেই প্রতিষ্ঠান এর একজন কর্মকর্তার মোবাইল নম্বর</label><input type="tel" id="a_jobplacemobile"><div class="err">Please enter a valid mobile number.</div></div>
       </div>
 
       <div class="section-label">Family Contacts</div>
-      <div class="field" data-field="father"><label>Father's name</label><input type="text" id="a_father"><div class="err">Please enter the father's name.</div></div>
+      <div class="field" data-field="father"><label>পিতার নাম</label><input type="text" id="a_father"><div class="err">Please enter the father's name.</div></div>
       <div class="field" data-field="fatherstatus">
-        <label>Is father alive?</label>
+        <label>পিতার বর্তমান অবস্থা নির্বাচন করুন</label>
         <div class="radio-group">
-          <label class="radio-pill" id="fatherAliveOpt"><input type="radio" name="fatherstatus" value="Alive" id="father_alive">Alive</label>
-          <label class="radio-pill" id="fatherDeadOpt"><input type="radio" name="fatherstatus" value="Dead" id="father_dead">Deceased</label>
+          <label class="radio-pill" id="fatherAliveOpt"><input type="radio" name="fatherstatus" value="Alive" id="father_alive">জীবিত</label>
+          <label class="radio-pill" id="fatherDeadOpt"><input type="radio" name="fatherstatus" value="Dead" id="father_dead">মৃত</label>
         </div>
         <div class="err">Please choose an option.</div>
       </div>
-      <div class="field hidden" data-field="fathermobile" id="fatherMobileField"><label>Father's mobile number</label><input type="tel" id="a_fathermobile"><div class="err">Please enter a valid mobile number.</div></div>
+      <div class="field hidden" data-field="fathermobile" id="fatherMobileField"><label>পিতার মোবাইল নম্বর</label><input type="tel" id="a_fathermobile"><div class="err">Please enter a valid mobile number.</div></div>
 
-      <div class="field" data-field="mother"><label>Mother's name</label><input type="text" id="a_mother"><div class="err">Please enter the mother's name.</div></div>
+      <div class="field" data-field="mother"><label>মাতার নাম</label><input type="text" id="a_mother"><div class="err">Please enter the mother's name.</div></div>
       <div class="field" data-field="motherstatus">
-        <label>Is mother alive?</label>
+        <label>মাতার বর্তমান অবস্থা নির্বাচন করুন</label>
         <div class="radio-group">
-          <label class="radio-pill" id="motherAliveOpt"><input type="radio" name="motherstatus" value="Alive" id="mother_alive">Alive</label>
-          <label class="radio-pill" id="motherDeadOpt"><input type="radio" name="motherstatus" value="Dead" id="mother_dead">Deceased</label>
+          <label class="radio-pill" id="motherAliveOpt"><input type="radio" name="motherstatus" value="Alive" id="mother_alive">জীবিত</label>
+          <label class="radio-pill" id="motherDeadOpt"><input type="radio" name="motherstatus" value="Dead" id="mother_dead">মৃত</label>
         </div>
         <div class="err">Please choose an option.</div>
       </div>
-      <div class="field hidden" data-field="mothermobile" id="motherMobileField"><label>Mother's mobile number</label><input type="tel" id="a_mothermobile"><div class="err">Please enter a valid mobile number.</div></div>
+      <div class="field hidden" data-field="mothermobile" id="motherMobileField"><label>মাতার মোবাইল নম্বর</label><input type="tel" id="a_mothermobile"><div class="err">Please enter a valid mobile number.</div></div>
 
-      <div class="field" data-field="sibling"><label>Brother / Sister name <span class="optional">(optional)</span></label><input type="text" id="a_siblingname"></div>
-      <div class="field" data-field="siblingmobile"><label>Brother / Sister mobile number <span class="optional">(optional)</span></label><input type="tel" id="a_siblingmobile"></div>
-      <div class="field" data-field="husband"><label>Husband name <span class="optional">(optional)</span></label><input type="text" id="a_husbandname"></div>
-      <div class="field" data-field="husbandmobile"><label>Husband mobile number <span class="optional">(optional)</span></label><input type="tel" id="a_husbandmobile"></div>
+      <div class="field" data-field="sibling"><label>আপন ভাই/বোন/পরিচিত ব্যক্তি(যে আপনাকে চেনে) তার নাম <span class="optional"></span></label><input type="text" id="a_siblingname"></div>
+      <div class="field" data-field="siblingmobile"><label>Brother / Sister mobile number <span class="optional"></span></label><input type="tel" id="a_siblingmobile"></div>
+      <div class="field" data-field="husband"><label>স্বামীর নাম<span class="optional">(optional)</span></label><input type="text" id="a_husbandname"></div>
+      <div class="field" data-field="husbandmobile"><label>স্বামীর মোবাইল নম্বর <span class="optional"></span></label><input type="tel" id="a_husbandmobile"></div>
 
       <div class="section-label">Address &amp; Referral</div>
-      <div class="field" data-field="address"><label>Permanent address</label><textarea id="a_address"></textarea><div class="err">Please enter the permanent address.</div></div>
-      <div class="field" data-field="heard"><label>Where did you get our news?</label>
+      <div class="field" data-field="address"><label>স্থায়ী ঠিকানা (বাড়ির নাম অথবা কোনো চিহ্নিত স্থান যেমন মসজিদ, স্কুল, কলেজ, মাদ্রাসা-  গ্রাম - ইউনিয়ন/পৌরসভা - উপজেলা/থানা - জেলা )</label><textarea id="a_address"></textarea><div class="err">Please enter the permanent address.</div></div>
+      <div class="field" data-field="heard"><label>কোন মাধ্যমে আমাদের হোস্টেলের তথ্য পেয়েছেন?</label>
         <div class="radio-group">
           <label class="radio-pill" id="heardOnlineOpt"><input type="radio" name="heard" value="Online Ad" id="heard_online">Online Ad</label>
           <label class="radio-pill" id="heardPersonOpt"><input type="radio" name="heard" value="Person" id="heard_person">Person</label>
@@ -123,24 +136,24 @@
         <div class="err">Please choose an option.</div>
       </div>
       <div id="personFields" class="hidden">
-        <div class="field" data-field="personname"><label>Person's name</label><input type="text" id="a_personname"><div class="err">Please enter the person's name.</div></div>
-        <div class="field" data-field="personmobile"><label>Person's mobile number</label><input type="tel" id="a_personmobile"><div class="err">Please enter a valid mobile number.</div></div>
+        <div class="field" data-field="personname"><label>ব্যক্তির নাম</label><input type="text" id="a_personname"><div class="err">Please enter the person's name.</div></div>
+        <div class="field" data-field="personmobile"><label>ব্যক্তির নম্বর</label><input type="tel" id="a_personmobile"><div class="err">Please enter a valid mobile number.</div></div>
       </div>
 
       <div class="section-label">Stay Details</div>
       <div class="field">
-        <label>Starting month</label>
+        <label>Starting month(উক্ত মাসের ১ হতে ৫ তারিখের মধ্যে উক্ত মাসের ভাড়া প্রদান করতে হবে)</label>
         <input type="text" id="a_startmonth" disabled>
-        <div class="optional" style="margin-top:5px;">Set by the admin when your account was created — contact them if this needs to change.</div>
+        <div class="optional" style="margin-top:5px;">Set by the authority when your account was created — contact them if this needs to change.</div>
       </div>
-      <div class="field" data-field="duration"><label>How long do you want to stay?</label>
+      <div class="field" data-field="duration"><label>কত দিন থাকার পরিকল্পনা?</label>
         <select id="a_duration"><option value="">Select duration</option><option value="1 Month">1 Month</option><option value="3 Months">3 Months</option><option value="6 Months">6 Months</option><option value="1 Year">1 Year</option><option value="More than 1 Year">More than 1 Year</option></select>
         <div class="err">Please select a duration.</div>
       </div>
 
-      <div class="section-label">Photo</div>
-      <p class="sub" style="margin-top:-8px;">Your photo is saved to a Google Sheet, not shown here in the admin panel.</p>
-      <div class="field" data-field="photo"><label>Upload picture</label>
+      <div class="section-label">আপনার ছবি দিন</div>
+      <p class="sub" style="margin-top:-8px;"></p>
+      <div class="field" data-field="photo"><label>Upload photo</label>
         <label class="photo-drop" id="photoDrop">
           <img class="photo-preview" id="photoPreview">
           <div class="hint" id="photoHint">Click to upload a photo (JPG or PNG)</div>
