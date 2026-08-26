@@ -70,7 +70,7 @@ a{ color:inherit; }
 font-size:16px; 
 color:var(--ink-soft); 
 line-height:1.65; max-width:480px;
-margin:0 0 28px;
+margin:15px 0 28px;
 text-align: center;
 }
 .hero-btn1{
