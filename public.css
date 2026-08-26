@@ -55,7 +55,7 @@ a{ color:inherit; }
 #banner{
   padding-top: 30px;
 }
-.hero{ padding:64px 0 56px; }
+.hero{ padding:44px 0 36px; }
 .hero-grid{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:48px; align-items:center; }
 .hero-eyebrow{
   font-family:'Caveat',cursive; font-size:24px; font-weight:700; color:var(--marigold-deep); margin:0 0 6px;
@@ -63,7 +63,7 @@ a{ color:inherit; }
 }
 .hero h2{
   font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:clamp(34px,5.2vw,54px);
-  line-height:1.08; margin:0 0 18px; color:var(--ink);
+  line-height:1.08; margin:0 0 15px; color:var(--ink);
   color: var(--marigold-deep);
 }
 .hero p{ 
