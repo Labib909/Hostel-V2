@@ -248,6 +248,10 @@ border-color: #95bfe4;}
   color: rgb(7, 141, 7)
 }
 
+.nav-container-ser{
+  display: flex;
+}
+
 @media (max-width: 860px){
   .site-links.open-mobile{
     display:flex; flex-direction:column; position:absolute; top:100%; left:0; right:0;
