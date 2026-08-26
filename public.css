@@ -256,10 +256,9 @@ border-color: #95bfe4;}
 }
 
 
-/* ---- Phone button layout ---- */
 @media (max-width: 860px){
 
-  /* My Profile: full-width button on its own row */
+  /* My Profile */
   .hero-btn1{
     width:100%;
     padding-bottom:12px;
@@ -268,27 +267,34 @@ border-color: #95bfe4;}
   .hero-btn1 .btn-address{
     width:100%;
     min-height:48px;
+    padding:13px 10px;
   }
 
-  /* Services + Gallery + Call Us: same row */
+  /* Services / Gallery / Call Us */
   .hero-ctas{
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:8px;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:6px;
     width:100%;
   }
 
   .hero-ctas a{
     width:100%;
     min-width:0;
-    padding:13px 5px;
+    max-width:100%;
+    padding:12px 2px !important;
+    margin:0;
     justify-content:center;
+    align-items:center;
     text-align:center;
-    font-size:12px;
+    font-size:11px;
+    box-sizing:border-box;
   }
 
   .hero-ctas .call-pill{
-    padding:13px 5px;
-    gap:4px;
+    padding:12px 2px !important;
+    gap:3px;
+    white-space:nowrap;
   }
+
 }
