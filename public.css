@@ -254,3 +254,41 @@ border-color: #95bfe4;}
     background:var(--bg); border-bottom:1px solid var(--line); padding:16px 24px; gap:14px;
   }
 }
+
+
+/* ---- Phone button layout ---- */
+@media (max-width: 860px){
+
+  /* My Profile: full-width button on its own row */
+  .hero-btn1{
+    width:100%;
+    padding-bottom:12px;
+  }
+
+  .hero-btn1 .btn-address{
+    width:100%;
+    min-height:48px;
+  }
+
+  /* Services + Gallery + Call Us: same row */
+  .hero-ctas{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    width:100%;
+  }
+
+  .hero-ctas a{
+    width:100%;
+    min-width:0;
+    padding:13px 5px;
+    justify-content:center;
+    text-align:center;
+    font-size:12px;
+  }
+
+  .hero-ctas .call-pill{
+    padding:13px 5px;
+    gap:4px;
+  }
+}
