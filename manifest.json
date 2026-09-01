@@ -1,37 +1,17 @@
 {
-"name": "VIP Ladies Hostel - Student Portal",
-"short_name": "Hostel Portal",
-"description": "Admission, payments, and updates for VIP Ladies Hostel residents.",
-"start_url": "/login.html",
-"scope": "/",
-"display": "standalone",
-"background_color": "#F1F3ED",
-"theme_color": "#2F6F63",
-"orientation": "portrait-primary",
-"icons": [
-{
-"src": "/icons/icon-192.png",
-"sizes": "192x192",
-"type": "image/png",
-"purpose": "any"
-},
-{
-"src": "/icons/icon-512.png",
-"sizes": "512x512",
-"type": "image/png",
-"purpose": "any"
-},
-{
-"src": "/icons/icon-192.png",
-"sizes": "192x192",
-"type": "image/png",
-"purpose": "maskable"
-},
-{
-"src": "/icons/icon-512.png",
-"sizes": "512x512",
-"type": "image/png",
-"purpose": "maskable"
-}
-]
+  "name": "Your Hostel Name - Student Portal",
+  "short_name": "Hostel Portal",
+  "description": "Admission, payments, and updates for Your Hostel Name residents.",
+  "start_url": "login.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F1F3ED",
+  "theme_color": "#2F6F63",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }
