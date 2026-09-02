@@ -55,22 +55,22 @@ a{ color:inherit; }
 #banner{
   padding-top: 30px;
 }
-.hero{ padding:44px 0 36px; }
+.hero{ padding:64px 0 56px; }
 .hero-grid{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:48px; align-items:center; }
 .hero-eyebrow{
   font-family:'Caveat',cursive; font-size:24px; font-weight:700; color:var(--marigold-deep); margin:0 0 6px;
   transform:rotate(-2deg); display:inline-block;
 }
-.hero h2{
-  font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:clamp(34px,5.2vw,54px);
-  line-height:1.08; margin:0 0 15px; color:var(--ink);
+.hero h1{
+  font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:clamp(22px,5.2vw,54px);
+  line-height:1.08; margin:-2px 0 12px; color:var(--ink);
   color: var(--marigold-deep);
 }
 .hero p{ 
 font-size:16px; 
 color:var(--ink-soft); 
 line-height:1.65; max-width:480px;
-margin:25px 0 28px;
+margin:0 0 28px;
 text-align: center;
 }
 .hero-btn1{
@@ -248,10 +248,6 @@ border-color: #95bfe4;}
   color: rgb(7, 141, 7)
 }
 
-.nav-container-ser{
-  display: flex;
-}
-
 @media (max-width: 860px){
   .site-links.open-mobile{
     display:flex; flex-direction:column; position:absolute; top:100%; left:0; right:0;
@@ -260,46 +256,39 @@ border-color: #95bfe4;}
 }
 
 
+/* ---- Phone button layout ---- */
 @media (max-width: 860px){
 
-  /* My Profile */
+  /* My Profile: full-width button on its own row */
   .hero-btn1{
     width:100%;
     padding-bottom:12px;
-    color: #16223C;
   }
 
   .hero-btn1 .btn-address{
     width:100%;
     min-height:48px;
-    padding:13px 10px;
   }
 
-  /* Services / Gallery / Call Us */
+  /* Services + Gallery + Call Us: same row */
   .hero-ctas{
     display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:6px;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
     width:100%;
   }
 
   .hero-ctas a{
     width:100%;
     min-width:0;
-    max-width:100%;
-    padding:12px 2px !important;
-    margin:0;
+    padding:13px 5px;
     justify-content:center;
-    align-items:center;
     text-align:center;
-    font-size:11px;
-    box-sizing:border-box;
+    font-size:12px;
   }
 
   .hero-ctas .call-pill{
-    padding:12px 2px !important;
-    gap:3px;
-    white-space:nowrap;
+    padding:13px 5px;
+    gap:4px;
   }
-
 }
