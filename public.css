@@ -293,8 +293,13 @@ border-color: #95bfe4;}
   }
 
   .hero h1{
-  font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:clamp(18px,5.2vw,54px);
-  line-height:1.08; margin:-2px 0 12px; color:var(--ink);
+  font-family:'Fraunces',serif; 
+  font-weight:600; font-style:italic; 
+  font-size:clamp(18px,5.2vw,54px);
+  line-height:1.08; 
+  margin:-2px 0 12px; 
+  color:var(--ink);
   color: var(--marigold-deep);
+  text-align: center;
 }
 }
