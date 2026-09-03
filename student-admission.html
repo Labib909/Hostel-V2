@@ -47,23 +47,23 @@
       <div class="section-label first">আপনার পেশা (সিলেক্ট করুন)</div>
       <div class="field" data-field="role">
         <div class="role-toggle">
-          <label class="role-option" id="roleStudentOpt"><input type="radio" name="role" value="student" id="role_student">ছাত্রী</label>
+          <label class="role-option" id="roleStudentOpt"><input type="radio" name="role" value="student" id="role_student" checked>ছাত্রী</label>
           <label class="role-option" id="roleWorkerOpt"><input type="radio" name="role" value="worker" id="role_worker">চাকরিজীবী</label>
         </div>
         <div class="err">Please choose ছাত্রী or চাকরিজীবী.</div>
       </div>
 
       <div class="section-label">Basic Info</div>
-      <div class="field" data-field="fullname"><label>আবেদনকারীর পূর্ণ নাম (ইংরেজিতে লিখুন )</label><input type="text" id="a_fullname"><div class="err">Please enter the full name.</div></div>
-      <div class="field" data-field="nickname"><label>আবেদনকারীর ডাক নাম</label><input type="text" id="a_nickname"><div class="err">Please enter a nick name.</div></div>
-      <div class="field" data-field="phone"><label>আবেদনকারীর মোবাইল নম্বর</label><input type="tel" id="a_phone"><div class="err">Please enter a valid phone number.</div></div>
-      <div class="field" data-field="whatsapp"><label>আবেদনকারীর whatsapp নম্বর</label><input type="tel" id="a_whatsapp"><div class="err">Please enter a valid WhatsApp number.</div></div>
+      <div class="field" data-field="fullname"><label>আবেদনকারীর পূর্ণ নাম (ইংরেজিতে লিখুন )</label><input type="text" id="a_fullname" required><div class="err">Please enter the full name.</div></div>
+      <div class="field" data-field="nickname"><label>আবেদনকারীর ডাক নাম</label><input type="text" id="a_nickname" required><div class="err">Please enter a nick name.</div></div>
+      <div class="field" data-field="phone"><label>আবেদনকারীর মোবাইল নম্বর</label><input type="tel" id="a_phone" required><div class="err">Please enter a valid phone number.</div></div>
+      <div class="field" data-field="whatsapp"><label>আবেদনকারীর whatsapp নম্বর</label><input type="tel" id="a_whatsapp" required><div class="err">Please enter a valid WhatsApp number.</div></div>
 
       <div id="studentFields" class="hidden">
         <div class="section-label">Academic Info</div>
-        <div class="field" data-field="college"><label>যে প্রতিষ্ঠানে পড়া-লেখা করেছেন সেই প্রতিষ্ঠানের নাম</label><input type="text" id="a_college"><div class="err">Please enter the college name.</div></div>
+        <div class="field" data-field="college"><label>যে প্রতিষ্ঠানে পড়া-লেখা করেছেন সেই প্রতিষ্ঠানের নাম</label><input type="text" id="a_college" required><div class="err">Please enter the college name.</div></div>
         <div class="field" data-field="collegecourse"><label>কিসে পড়েন </label>
-          <select id="a_collegecourse"><option value="">Select level</option>
+          <select id="a_collegecourse" ><option value="">Select level</option>
             <option value="SSC">SSC</option>
             <option value="HSC">HSC</option>
             <option value="Degree">Degree</option>
@@ -92,7 +92,7 @@
       </div>
 
       <div class="section-label">Family Contacts</div>
-      <div class="field" data-field="father"><label>পিতার নাম</label><input type="text" id="a_father"><div class="err">Please enter the father's name.</div></div>
+      <div class="field" data-field="father"><label>পিতার নাম</label><input type="text" id="a_father" required><div class="err">Please enter the father's name.</div></div>
       <div class="field" data-field="fatherstatus">
         <label>পিতার বর্তমান অবস্থা নির্বাচন করুন</label>
         <div class="radio-group">
@@ -103,7 +103,7 @@
       </div>
       <div class="field hidden" data-field="fathermobile" id="fatherMobileField"><label>পিতার মোবাইল নম্বর</label><input type="tel" id="a_fathermobile"><div class="err">Please enter a valid mobile number.</div></div>
 
-      <div class="field" data-field="mother"><label>মাতার নাম</label><input type="text" id="a_mother"><div class="err">Please enter the mother's name.</div></div>
+      <div class="field" data-field="mother"><label>মাতার নাম</label><input type="text" id="a_mother" required><div class="err">Please enter the mother's name.</div></div>
       <div class="field" data-field="motherstatus">
         <label>মাতার বর্তমান অবস্থা নির্বাচন করুন</label>
         <div class="radio-group">
@@ -150,7 +150,7 @@
         <label class="photo-drop" id="photoDrop">
           <img class="photo-preview" id="photoPreview">
           <div class="hint" id="photoHint">Click to upload a photo (JPG or PNG)</div>
-          <input type="file" id="a_photo" accept="image/*">
+          <input type="file" id="a_photo" accept="image/*" required>
         </label>
         <div class="err">Please upload a photo.</div>
       </div>
